@@ -123,19 +123,18 @@ class TranslationRepository(
      */
     private fun isSpecialNonTranslatableString(value: String): Boolean {
         // Check for package names, class names, or other technical strings
-        return value.matches(Regex("^[a-zA-Z0-9]+(\\.[a-zA-Z0-9]+)+$")) || // Package names like androidx.startup
-               value.matches(Regex("^[A-Z][a-zA-Z0-9]*$")) || // Class names like MainActivity
-               value.matches(Regex("^[a-zA-Z0-9_]+$")) || // Simple technical identifiers
-               value.startsWith("http://") || value.startsWith("https://") || // URLs
-               value.startsWith("androidx.") || // Specific package prefixes
-               value.startsWith("android.") ||
-               value.startsWith("java.") ||
-               value.startsWith("kotlin.") ||
-               value.contains("@") || // Email addresses or resource references
-               value.matches(Regex(".*\\{.*\\}.*")) || // Strings with placeholders like {0}
-               value.matches(Regex(".*%[sdfx].*")) || // Format specifiers like %s, %d
-               value.matches(Regex("^[0-9]+$")) || // Pure numbers
-               value.trim().isEmpty() // Empty strings
+        return value.matches(Regex("^[a-zA-Z0-9_.-]+(\.[a-zA-Z0-9_.-]+)+$")) || // More robust package/class name detection
+                value.matches(Regex("^[A-Z][a-zA-Z0-9_]*$")) || // Class names
+                value.matches(Regex("^[a-z_][a-z0-9_]*$")) || // resource names
+                value.startsWith("http://") || value.startsWith("https://") || // URLs
+                value.startsWith("content://") || // Content URIs
+                value.startsWith("file://") || // File URIs
+                value.contains("@string/") || value.contains("@color/") || value.contains("@dimen/") || // Android resource references
+                value.matches(Regex(".*\\{\\d+\\}.*")) || // Placeholders like {0}
+                value.matches(Regex(".*%[\\d\\$]*[sdfx].*")) || // Format specifiers like %s, %1$s, %d
+                value.matches(Regex("^[0-9.:-]+$")) || // Pure numbers, versions, or time
+                value.trim().isEmpty() || // Empty strings
+                !value.any { it.isLetter() } // Strings without any letters
     }
     
     /**
@@ -189,8 +188,8 @@ class TranslationRepository(
                 val updatedResources = resources.toMutableList()
                 
                 // Batch size and delay to avoid rate limiting
-                val batchSize = 5
-                val delayBetweenBatchesMs = 1000L // 1 second delay between batches
+-                val batchSize = 5
+                val delayBetweenBatchesMs = 500L // 0.5 second delay between batches
                 
                 // Process in batches
                 for (batchStart in resources.indices step batchSize) {
