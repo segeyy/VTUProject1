@@ -111,8 +111,8 @@ class MainViewModel(
     /**
      * Get all logs as text
      */
-    fun getLogsAsText(): String {
-        return logRepository.getLogsAsText()
+    fun getLogsAsText(context: android.content.Context): String {
+        return logRepository.getLogsAsText(context)
     }
     
     /**

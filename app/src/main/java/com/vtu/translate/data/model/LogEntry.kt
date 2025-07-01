@@ -17,17 +17,18 @@ data class LogEntry(
         return dateFormat.format(Date(timestamp))
     }
     
-    fun getFormattedEntry(): String {
-        return "[${getFormattedTimestamp()}] ${type.prefix}: $message"
+    fun getFormattedEntry(context: android.content.Context): String {
+        val typeText = context.getString(type.stringResId)
+        return "[${getFormattedTimestamp()}] $typeText: $message"
     }
 }
 
 /**
  * Types of log entries
  */
-enum class LogType(val prefix: String) {
-    INFO("INFO"),
-    SUCCESS("SUCCESS"),
-    ERROR("ERROR"),
-    WARNING("WARNING")
+enum class LogType(val stringResId: Int) {
+    INFO(com.vtu.translate.R.string.log_type_info),
+    SUCCESS(com.vtu.translate.R.string.log_type_success),
+    ERROR(com.vtu.translate.R.string.log_type_error),
+    WARNING(com.vtu.translate.R.string.log_type_warning)
 }

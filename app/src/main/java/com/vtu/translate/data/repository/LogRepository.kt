@@ -58,9 +58,9 @@ class LogRepository {
     }
     
     /**
-     * Get all logs as a formatted string
+     * Get all logs as text for copying
      */
-    fun getLogsAsText(): String {
-        return _logs.value.joinToString("\n") { it.getFormattedEntry() }
+    fun getLogsAsText(context: android.content.Context): String {
+        return _logs.value.joinToString("\n") { it.getFormattedEntry(context) }
     }
 }

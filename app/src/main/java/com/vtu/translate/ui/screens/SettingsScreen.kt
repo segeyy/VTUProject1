@@ -90,13 +90,19 @@ fun SettingsScreen(
     val translationSpeed by viewModel.translationSpeed.collectAsState()
     val context = LocalContext.current
     
+    // State for expanded sections
+    var expandedApiSettings by remember { mutableStateOf(false) }
+    var expandedInterfaceSettings by remember { mutableStateOf(false) }
+    var expandedTranslationSettings by remember { mutableStateOf(false) }
+    var expandedAbout by remember { mutableStateOf(false) }
+    
     Column(
         modifier = modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
             .padding(16.dp)
             .verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.spacedBy(2.dp)
+        verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         // Header
         SettingsHeader()
@@ -108,24 +114,51 @@ fun SettingsScreen(
             icon = R.drawable.ic_key,
             title = stringResource(R.string.api_settings_title),
             subtitle = stringResource(R.string.api_settings_subtitle),
-            onClick = { /* Expand API settings */ }
+            onClick = { expandedApiSettings = !expandedApiSettings }
         )
+        
+        AnimatedVisibility(
+            visible = expandedApiSettings,
+            enter = expandVertically() + fadeIn(),
+            exit = shrinkVertically() + fadeOut()
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                ApiKeySection(viewModel, apiKey)
+                ModelSelectionSection(viewModel, selectedModel)
+            }
+        }
         
         // Interface Settings
         SettingsCategoryItem(
             icon = R.drawable.ic_interface,
             title = stringResource(R.string.interface_title),
             subtitle = stringResource(R.string.interface_subtitle),
-            onClick = { /* Expand interface settings */ }
+            onClick = { expandedInterfaceSettings = !expandedInterfaceSettings }
         )
+        
+        AnimatedVisibility(
+            visible = expandedInterfaceSettings,
+            enter = expandVertically() + fadeIn(),
+            exit = shrinkVertically() + fadeOut()
+        ) {
+            InterfaceSettingsSection(viewModel, isDarkTheme)
+        }
         
         // Translation Settings
         SettingsCategoryItem(
             icon = R.drawable.ic_translate,
             title = stringResource(R.string.translation_settings_title),
             subtitle = stringResource(R.string.translation_settings_subtitle),
-            onClick = { /* Expand translation settings */ }
+            onClick = { expandedTranslationSettings = !expandedTranslationSettings }
         )
+        
+        AnimatedVisibility(
+            visible = expandedTranslationSettings,
+            enter = expandVertically() + fadeIn(),
+            exit = shrinkVertically() + fadeOut()
+        ) {
+            TranslationSettingsSection(viewModel, translationSpeed)
+        }
         
         // About
         val versionName = getAppVersion(context)
@@ -133,8 +166,16 @@ fun SettingsScreen(
             icon = R.drawable.ic_info,
             title = stringResource(R.string.about_title),
             subtitle = "${stringResource(R.string.app_version)}: $versionName",
-            onClick = { /* Show about info */ }
+            onClick = { expandedAbout = !expandedAbout }
         )
+        
+        AnimatedVisibility(
+            visible = expandedAbout,
+            enter = expandVertically() + fadeIn(),
+            exit = shrinkVertically() + fadeOut()
+        ) {
+            CreditsSection()
+        }
     }
 }
 
@@ -365,6 +406,97 @@ fun ModelSelectionSection(
     }
 }
 
+
+@Composable
+fun InterfaceSettingsSection(
+    viewModel: MainViewModel,
+    isDarkTheme: Boolean,
+    modifier: Modifier = Modifier
+) {
+    val context = LocalContext.current
+    
+    SettingsSectionCard(
+        title = stringResource(R.string.interface_title),
+        icon = R.drawable.ic_interface,
+        modifier = modifier
+    ) {
+        // Dark theme switch
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column {
+                Text(
+                    text = stringResource(R.string.dark_theme),
+                    style = MaterialTheme.typography.bodyLarge
+                )
+                Text(
+                    text = if (isDarkTheme) "Enabled" else "Disabled",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                )
+            }
+            Switch(
+                checked = isDarkTheme,
+                onCheckedChange = { viewModel.saveDarkTheme(it) }
+            )
+        }
+        
+        // App language setting placeholder
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column {
+                Text(
+                    text = stringResource(R.string.app_language),
+                    style = MaterialTheme.typography.bodyLarge
+                )
+                Text(
+                    text = "Vietnamese", // TODO: Make this dynamic
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun TranslationSettingsSection(
+    viewModel: MainViewModel,
+    translationSpeed: Int,
+    modifier: Modifier = Modifier
+) {
+    SettingsSectionCard(
+        title = stringResource(R.string.translation_settings_title),
+        icon = R.drawable.ic_translate,
+        modifier = modifier
+    ) {
+        // Translation speed slider
+        Column {
+            Text(
+                text = stringResource(R.string.translation_speed),
+                style = MaterialTheme.typography.bodyLarge
+            )
+            Text(
+                text = "Speed: $translationSpeed",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+            Slider(
+                value = translationSpeed.toFloat(),
+                onValueChange = { viewModel.saveTranslationSpeed(it.toInt()) },
+                valueRange = 1f..5f,
+                steps = 3,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+    }
+}
 
 @Composable
 fun CreditsSection(modifier: Modifier = Modifier) {

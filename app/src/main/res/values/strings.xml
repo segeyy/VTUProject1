@@ -63,6 +63,12 @@
     <string name="log_cleared">Log cleared</string>
     <string name="log_yet">No logs yet</string>
     
+    <!-- Log Message Types -->
+    <string name="log_type_info">INFO</string>
+    <string name="log_type_success">SUCCESS</string>
+    <string name="log_type_error">ERROR</string>
+    <string name="log_type_warning">WARNING</string>
+    
     <!-- Error Messages -->
     <string name="error_no_api_key">Please enter API Key in Settings</string>
     <string name="error_no_model_selected">Please select AI Model in Settings</string>

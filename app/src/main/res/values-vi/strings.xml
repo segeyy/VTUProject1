@@ -39,6 +39,12 @@
     <string name="log_cleared">Đã xóa log</string>
     <string name="log_yet">Chưa có nhật ký</string>
     
+    <!-- Log Message Types -->
+    <string name="log_type_info">THÔNG TIN</string>
+    <string name="log_type_success">THÀNH CÔNG</string>
+    <string name="log_type_error">LỖI</string>
+    <string name="log_type_warning">CẢNH BÁO</string>
+    
     <!-- Error Messages -->
     <string name="error_no_api_key">Vui lòng nhập API Key trong phần Cài đặt</string>
     <string name="error_no_model_selected">Vui lòng chọn Model AI trong phần Cài đặt</string>

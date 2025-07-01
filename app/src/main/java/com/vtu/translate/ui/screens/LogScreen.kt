@@ -57,7 +57,7 @@ fun LogScreen(
             // Copy logs button
             Button(
                 onClick = {
-                    val logsText = viewModel.getLogsAsText()
+                    val logsText = viewModel.getLogsAsText(context)
                     copyToClipboard(context, logsText)
                     Toast.makeText(
                         context,
@@ -149,7 +149,7 @@ fun LogEntryItem(logEntry: LogEntry) {
                         .padding(horizontal = 8.dp, vertical = 4.dp)
                 ) {
                     Text(
-                        text = logEntry.type.prefix,
+                        text = stringResource(logEntry.type.stringResId),
                         style = MaterialTheme.typography.bodySmall,
                         color = Color.White
                     )
