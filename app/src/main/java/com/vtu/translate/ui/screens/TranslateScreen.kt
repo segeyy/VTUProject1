@@ -5,6 +5,24 @@ import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,20 +32,33 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ElevatedButton
+import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.ProgressIndicatorDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.res.painterResource
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -106,17 +137,39 @@ fun TranslateScreen(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // File selection button
-        Button(
-            onClick = { filePickerLauncher.launch("text/xml") },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Icon(
-                painter = painterResource(id = R.drawable.ic_file),
-                contentDescription = null,
-                modifier = Modifier.padding(end = 8.dp)
+        // File selection button with gradient background
+        ElevatedCard(
+            modifier = Modifier.fillMaxWidth(),
+            elevation = CardDefaults.elevatedCardElevation(defaultElevation = 6.dp),
+            colors = CardDefaults.elevatedCardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant
             )
-            Text(stringResource(R.string.select_file))
+        ) {
+            ElevatedButton(
+                onClick = { filePickerLauncher.launch("text/xml") },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                colors = ButtonDefaults.elevatedButtonColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                ),
+                elevation = ButtonDefaults.elevatedButtonElevation(
+                    defaultElevation = 4.dp,
+                    pressedElevation = 8.dp
+                )
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_file),
+                    contentDescription = null,
+                    modifier = Modifier.padding(end = 12.dp),
+                    tint = MaterialTheme.colorScheme.primary
+                )
+                Text(
+                    text = stringResource(R.string.select_file),
+                    style = MaterialTheme.typography.titleMedium
+                )
+            }
         }
         
         // Show selected file name
@@ -142,8 +195,13 @@ fun TranslateScreen(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                // Start translation button
-                Button(
+                // Start translation button with animation
+                val startButtonElevation by animateDpAsState(
+                    targetValue = if (!isTranslating && stringResources.isNotEmpty()) 6.dp else 2.dp,
+                    animationSpec = spring(stiffness = Spring.StiffnessMedium)
+                )
+                
+                ElevatedButton(
                     onClick = {
                         if (apiKey.isBlank()) {
                             Toast.makeText(
@@ -151,7 +209,7 @@ fun TranslateScreen(
                                 context.getString(R.string.error_no_api_key),
                                 Toast.LENGTH_SHORT
                             ).show()
-                            return@Button
+                            return@ElevatedButton
                         }
                         
                         if (selectedModel.isBlank()) {
@@ -160,7 +218,7 @@ fun TranslateScreen(
                                 context.getString(R.string.error_no_model_selected),
                                 Toast.LENGTH_SHORT
                             ).show()
-                            return@Button
+                            return@ElevatedButton
                         }
                         
                         if (stringResources.isEmpty()) {
@@ -169,36 +227,86 @@ fun TranslateScreen(
                                 context.getString(R.string.error_no_file_selected),
                                 Toast.LENGTH_SHORT
                             ).show()
-                            return@Button
+                            return@ElevatedButton
                         }
                         
                         viewModel.startTranslation()
                     },
                     modifier = Modifier.weight(1f),
-                    enabled = !isTranslating && stringResources.isNotEmpty()
-                ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.ic_start_translate),
-                        contentDescription = null,
-                        modifier = Modifier.padding(end = 8.dp)
+                    enabled = !isTranslating && stringResources.isNotEmpty(),
+                    elevation = ButtonDefaults.elevatedButtonElevation(
+                        defaultElevation = startButtonElevation,
+                        pressedElevation = 8.dp
+                    ),
+                    colors = ButtonDefaults.elevatedButtonColors(
+                        containerColor = if (isTranslating) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.primary,
+                        contentColor = if (isTranslating) MaterialTheme.colorScheme.onSecondary else MaterialTheme.colorScheme.onPrimary
                     )
-                    Text(stringResource(if (isTranslating) R.string.translating else R.string.start_translate))
+                ) {
+                    AnimatedContent(
+                        targetState = isTranslating,
+                        transitionSpec = {
+                            fadeIn(animationSpec = tween(300)) togetherWith fadeOut(animationSpec = tween(300))
+                        }
+                    ) { translating ->
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            if (translating) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(16.dp),
+                                    strokeWidth = 2.dp,
+                                    color = MaterialTheme.colorScheme.onSecondary
+                                )
+                                Spacer(modifier = Modifier.size(8.dp))
+                            } else {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.ic_start_translate),
+                                    contentDescription = null,
+                                    modifier = Modifier.padding(end = 8.dp)
+                                )
+                            }
+                            Text(
+                                text = stringResource(if (translating) R.string.translating else R.string.start_translate),
+                                style = MaterialTheme.typography.labelLarge
+                            )
+                        }
+                    }
                 }
                 
-                // Stop translation button
-                Button(
+                // Stop translation button with animation
+                val stopButtonElevation by animateDpAsState(
+                    targetValue = if (isTranslating) 6.dp else 2.dp,
+                    animationSpec = spring(stiffness = Spring.StiffnessMedium)
+                )
+                
+                ElevatedButton(
                     onClick = {
                         viewModel.stopTranslation()
                     },
                     modifier = Modifier.weight(1f),
-                    enabled = isTranslating
+                    enabled = isTranslating,
+                    elevation = ButtonDefaults.elevatedButtonElevation(
+                        defaultElevation = stopButtonElevation,
+                        pressedElevation = 8.dp
+                    ),
+                    colors = ButtonDefaults.elevatedButtonColors(
+                        containerColor = MaterialTheme.colorScheme.errorContainer,
+                        contentColor = MaterialTheme.colorScheme.onErrorContainer,
+                        disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                        disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 ) {
                     Icon(
                         painter = painterResource(id = R.drawable.ic_stop_translate),
                         contentDescription = null,
                         modifier = Modifier.padding(end = 8.dp)
                     )
-                    Text(stringResource(R.string.stop_translation))
+                    Text(
+                        text = stringResource(R.string.stop_translation),
+                        style = MaterialTheme.typography.labelLarge
+                    )
                 }
             }
             
