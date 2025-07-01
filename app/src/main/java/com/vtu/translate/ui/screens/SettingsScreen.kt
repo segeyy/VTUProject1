@@ -509,7 +509,7 @@ fun TranslationSettingsSection(
             }
         }
         
-        Divider(modifier = Modifier.padding(vertical = 8.dp))
+        HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
         
         // Inverted translate switch
         Row(
@@ -534,7 +534,7 @@ fun TranslationSettingsSection(
             )
         }
         
-        Divider(modifier = Modifier.padding(vertical = 8.dp))
+        HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
         
         // Translation speed slider
         Column {
@@ -755,7 +755,7 @@ fun ModelSelectionDropdown(
                     )
                 }
                 
-                Divider(modifier = Modifier.padding(vertical = 4.dp))
+                HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
                 
                 // Deepseek & Meta models group
                 DropdownMenuItem(
