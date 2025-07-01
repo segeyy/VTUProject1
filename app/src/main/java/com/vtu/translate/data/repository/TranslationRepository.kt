@@ -13,7 +13,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.withContext
 import org.xmlpull.v1.XmlPullParser
 import org.xmlpull.v1.XmlPullParserFactory
-import org.xmlpull.v1.XmlSerializer
 import java.io.File
 import java.io.FileOutputStream
 import java.io.InputStream
@@ -180,14 +179,14 @@ class TranslationRepository(
     /**
      * Continue translation from where it was stopped
      */
-    suspend fun continueTranslation(isInverted: Boolean = false, targetLanguage: String = "vi"): Result<Unit> {
-        return translateAll(isInverted, targetLanguage, continueFromIndex = getCurrentTranslationIndex())
+    suspend fun continueTranslation(targetLanguage: String = "vi"): Result<Unit> {
+        return translateAll(targetLanguage, continueFromIndex = getCurrentTranslationIndex())
     }
     
     /**
      * Translate all string resources
      */
-    suspend fun translateAll(isInverted: Boolean = false, targetLanguage: String = "vi", continueFromIndex: Int = 0): Result<Unit> {
+    suspend fun translateAll(targetLanguage: String = "vi", continueFromIndex: Int = 0): Result<Unit> {
         return withContext(Dispatchers.IO) {
             try {
                 _isTranslating.value = true
@@ -237,8 +236,8 @@ class TranslationRepository(
                         updatedResources[i] = resource.copy(isTranslating = true)
                         _stringResources.value = updatedResources.toList()
                         
-                        // Translate the string based on isInverted and targetLanguage parameters
-                        val result = translateTextWithLanguages(resource.value, isInverted, targetLanguage)
+                        // Translate the string based on targetLanguage parameter
+                        val result = translateTextWithLanguages(resource.value, targetLanguage)
                         
                         if (result.isSuccess) {
                             val translatedText = result.getOrNull() ?: ""
@@ -305,7 +304,7 @@ class TranslationRepository(
     /**
      * Save translated strings to a new XML file
      */
-    suspend fun saveTranslatedFile(): Result<String> {
+    suspend fun saveTranslatedFile(targetLanguage: String = "vi"): Result<String> {
         return withContext(Dispatchers.IO) {
             try {
                 val resources = _stringResources.value
@@ -313,16 +312,31 @@ class TranslationRepository(
                     return@withContext Result.failure(Exception("No strings to save"))
                 }
                 
+                // Map language codes to folder suffixes
+                val languageFolderMap = mapOf(
+                    "vi" to "values-vi",
+                    "en" to "values", // Default folder for English
+                    "zh" to "values-zh",
+                    "ru" to "values-ru", 
+                    "ko" to "values-ko",
+                    "es" to "values-es",
+                    "fr" to "values-fr",
+                    "de" to "values-de",
+                    "ja" to "values-ja"
+                )
+                
+                val folderName = languageFolderMap[targetLanguage] ?: "values-$targetLanguage"
+                
                 // Create directory structure in Downloads folder
                 val downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
                 val resDir = File(downloadsDir, "res")
-                val valuesViDir = File(resDir, "values-vi")
+                val valuesDir = File(resDir, folderName)
                 
-                if (!valuesViDir.exists()) {
-                    valuesViDir.mkdirs()
+                if (!valuesDir.exists()) {
+                    valuesDir.mkdirs()
                 }
                 
-                val outputFile = File(valuesViDir, "strings.xml")
+                val outputFile = File(valuesDir, "strings.xml")
                 
                 // Create XML file
                 val serializer = XmlPullParserFactory.newInstance().newSerializer()
@@ -443,16 +457,11 @@ class TranslationRepository(
     }
     
     /**
-     * Translate text with language direction support
+     * Translate text to specified target language
      */
-    private suspend fun translateTextWithLanguages(text: String, isInverted: Boolean, targetLanguage: String): Result<String> {
-        return if (isInverted) {
-            // Inverted: translate from targetLanguage to English
-            groqRepository.translateTextWithLanguages(text, fromLanguage = targetLanguage, toLanguage = "en")
-        } else {
-            // Normal: translate from English to targetLanguage  
-            groqRepository.translateTextWithLanguages(text, fromLanguage = "en", toLanguage = targetLanguage)
-        }
+    private suspend fun translateTextWithLanguages(text: String, targetLanguage: String): Result<String> {
+        // Always translate from English to targetLanguage
+        return groqRepository.translateTextWithLanguages(text, fromLanguage = "en", toLanguage = targetLanguage)
     }
     
     /**

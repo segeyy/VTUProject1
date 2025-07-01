@@ -413,6 +413,8 @@ fun InterfaceSettingsSection(
     isDarkTheme: Boolean,
     modifier: Modifier = Modifier
 ) {
+    val appLanguage by viewModel.appLanguage.collectAsState()
+    
     SettingsSectionCard(
         title = stringResource(R.string.interface_title),
         icon = R.drawable.ic_interface,
@@ -441,24 +443,13 @@ fun InterfaceSettingsSection(
             )
         }
         
-        // App language setting placeholder
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column {
-                Text(
-                    text = stringResource(R.string.app_language),
-                    style = MaterialTheme.typography.bodyLarge
-                )
-                Text(
-                    text = "Vietnamese", // TODO: Make this dynamic
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                )
-            }
-        }
+        Divider(modifier = Modifier.padding(vertical = 16.dp))
+        
+        // App language dropdown
+        AppLanguageDropdown(
+            selectedLanguage = appLanguage,
+            onLanguageSelected = { viewModel.saveAppLanguage(it) }
+        )
     }
 }
 
@@ -469,72 +460,19 @@ fun TranslationSettingsSection(
     modifier: Modifier = Modifier
 ) {
     val targetLanguage by viewModel.targetLanguage.collectAsState()
-    val isInvertedTranslate by viewModel.isInvertedTranslate.collectAsState()
     
     SettingsSectionCard(
         title = stringResource(R.string.translation_settings_title),
         icon = R.drawable.ic_translate,
         modifier = modifier
     ) {
-        // Target language selection
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column {
-                Text(
-                    text = stringResource(R.string.target_language),
-                    style = MaterialTheme.typography.bodyLarge
-                )
-                Text(
-                    text = if (targetLanguage == "vi") "Tiếng Việt" else "English",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                )
-            }
-            
-            // Simple language toggle button
-            ElevatedButton(
-                onClick = {
-                    val newLanguage = if (targetLanguage == "vi") "en" else "vi"
-                    viewModel.saveTargetLanguage(newLanguage)
-                },
-                colors = ButtonDefaults.elevatedButtonColors(
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-                )
-            ) {
-                Text(if (targetLanguage == "vi") "VI" else "EN")
-            }
-        }
+        // Target language selection dropdown
+        TargetLanguageDropdown(
+            selectedLanguage = targetLanguage,
+            onLanguageSelected = { viewModel.saveTargetLanguage(it) }
+        )
         
-        Divider(modifier = Modifier.padding(vertical = 8.dp))
-        
-        // Inverted translate switch
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column {
-                Text(
-                    text = stringResource(R.string.inverted_translate),
-                    style = MaterialTheme.typography.bodyLarge
-                )
-                Text(
-                    text = stringResource(R.string.inverted_translate_subtitle),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                )
-            }
-            Switch(
-                checked = isInvertedTranslate,
-                onCheckedChange = { viewModel.saveInvertedTranslate(it) }
-            )
-        }
-        
-        Divider(modifier = Modifier.padding(vertical = 8.dp))
+        Divider(modifier = Modifier.padding(vertical = 16.dp))
         
         // Translation speed slider
         Column {
@@ -635,6 +573,184 @@ fun SettingsSectionCard(
             
             // Section content
             content()
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AppLanguageDropdown(
+    selectedLanguage: String,
+    onLanguageSelected: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var expanded by remember { mutableStateOf(false) }
+    
+    // Define available app languages
+    val appLanguages = mapOf(
+        "system" to "Theo hệ thống (System)",
+        "vi" to "Tiếng Việt (Vietnamese)",
+        "en" to "Tiếng Anh (English)"
+    )
+    
+    Column(modifier = modifier) {
+        Text(
+            text = stringResource(R.string.app_language),
+            style = MaterialTheme.typography.bodyLarge,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
+        
+        ExposedDropdownMenuBox(
+            expanded = expanded,
+            onExpandedChange = { expanded = it },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            TextField(
+                value = appLanguages[selectedLanguage] ?: selectedLanguage,
+                onValueChange = {},
+                readOnly = true,
+                trailingIcon = {
+                    Icon(
+                        imageVector = if (expanded) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown,
+                        contentDescription = if (expanded) "Collapse" else "Expand",
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                },
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                    focusedIndicatorColor = MaterialTheme.colorScheme.primary,
+                    unfocusedIndicatorColor = MaterialTheme.colorScheme.outline
+                ),
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .menuAnchor()
+            )
+            
+            ExposedDropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                appLanguages.forEach { (code, name) ->
+                    val isSelected = code == selectedLanguage
+                    DropdownMenuItem(
+                        text = {
+                            Text(
+                                text = name,
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                            )
+                        },
+                        onClick = {
+                            onLanguageSelected(code)
+                            expanded = false
+                        },
+                        leadingIcon = if (isSelected) {
+                            {
+                                Icon(
+                                    imageVector = Icons.Filled.Check,
+                                    contentDescription = "Selected",
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                        } else null
+                    )
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun TargetLanguageDropdown(
+    selectedLanguage: String,
+    onLanguageSelected: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var expanded by remember { mutableStateOf(false) }
+    
+    // Define available target languages
+    val languages = mapOf(
+        "vi" to "Tiếng Việt (Vietnamese)",
+        "en" to "Tiếng Anh (English)", 
+        "zh" to "Tiếng Trung (Chinese)",
+        "ru" to "Tiếng Nga (Russian)",
+        "ko" to "Tiếng Hàn (Korean)",
+        "es" to "Tiếng Tây Ban Nha (Spanish)",
+        "fr" to "Tiếng Pháp (French)",
+        "de" to "Tiếng Đức (German)",
+        "ja" to "Tiếng Nhật (Japanese)"
+    )
+    
+    Column(modifier = modifier) {
+        Text(
+            text = stringResource(R.string.target_language),
+            style = MaterialTheme.typography.bodyLarge,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
+        
+        ExposedDropdownMenuBox(
+            expanded = expanded,
+            onExpandedChange = { expanded = it },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            TextField(
+                value = languages[selectedLanguage] ?: selectedLanguage,
+                onValueChange = {},
+                readOnly = true,
+                trailingIcon = {
+                    Icon(
+                        imageVector = if (expanded) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown,
+                        contentDescription = if (expanded) "Collapse" else "Expand",
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                },
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                    focusedIndicatorColor = MaterialTheme.colorScheme.primary,
+                    unfocusedIndicatorColor = MaterialTheme.colorScheme.outline
+                ),
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .menuAnchor()
+            )
+            
+            ExposedDropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                languages.forEach { (code, name) ->
+                    val isSelected = code == selectedLanguage
+                    DropdownMenuItem(
+                        text = {
+                            Text(
+                                text = name,
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                            )
+                        },
+                        onClick = {
+                            onLanguageSelected(code)
+                            expanded = false
+                        },
+                        leadingIcon = if (isSelected) {
+                            {
+                                Icon(
+                                    imageVector = Icons.Filled.Check,
+                                    contentDescription = "Selected",
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                        } else null
+                    )
+                }
+            }
         }
     }
 }

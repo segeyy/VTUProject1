@@ -20,11 +20,11 @@
     <string name="error_saving_file">Error saving file: %1$s</string>
     
     <!-- Settings Screen -->
-    <string name="settings_title">Cài đặt</string>
+    <string name="settings_title">Settings</string>
     
     <!-- API Settings -->
-    <string name="api_settings_title">Cài đặt API</string>
-    <string name="api_settings_subtitle">Groq API Key, Model AI</string>
+    <string name="api_settings_title">API Settings</string>
+    <string name="api_settings_subtitle">Groq API Key, AI Model</string>
     <string name="api_key_title">Groq API Key</string>
     <string name="get_api_key">Get API Key</string>
     <string name="api_key_saved">API Key saved</string>
@@ -33,20 +33,18 @@
     <string name="model_group_deepseek_meta">Deepseek &amp; Meta</string>
     
     <!-- Interface Settings -->
-    <string name="interface_title">Giao diện</string>
-    <string name="interface_subtitle">Chế độ tối, Ngôn ngữ ứng dụng</string>
-    <string name="dark_theme">Chế độ tối</string>
-    <string name="app_language">Ngôn ngữ ứng dụng</string>
+    <string name="interface_title">Interface</string>
+    <string name="interface_subtitle">Dark Mode, App Language</string>
+    <string name="dark_theme">Dark Mode</string>
+    <string name="app_language">App Language</string>
     
     <!-- Translation Settings -->
-    <string name="translation_settings_title">Cài đặt dịch</string>
-    <string name="translation_settings_subtitle">Tốc độ dịch, Ngôn ngữ đích, Chế độ đảo</string>
-    <string name="translation_speed">Tốc độ dịch</string>
-    <string name="batch_size">Kích thước batch</string>
-    <string name="target_language">Ngôn ngữ đích</string>
-    <string name="inverted_translate">Chế độ đảo ngược dịch</string>
-    <string name="inverted_translate_subtitle">Dịch từ tiếng Việt sang tiếng Anh</string>
-    <string name="continue_translation">Tiếp tục dịch</string>
+    <string name="translation_settings_title">Translation Settings</string>
+    <string name="translation_settings_subtitle">Translation Speed, Target Language</string>
+    <string name="translation_speed">Translation Speed</string>
+    <string name="batch_size">Batch Size</string>
+    <string name="target_language">Target Language</string>
+    <string name="continue_translation">Continue Translation</string>
     
     <!-- About -->
     <string name="about_title">Giới thiệu</string>

@@ -95,7 +95,8 @@ class GroqRepository(private val preferencesRepository: PreferencesRepository) {
                 "de" to "German",
                 "ja" to "Japanese",
                 "ko" to "Korean",
-                "zh" to "Chinese"
+                "zh" to "Chinese",
+                "ru" to "Russian"
             )
             
             val fromLangName = languageMap[fromLanguage] ?: fromLanguage

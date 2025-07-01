@@ -110,6 +110,7 @@ fun TranslateScreen(
     val selectedFileName by viewModel.selectedFileName.collectAsState()
     val apiKey by viewModel.apiKey.collectAsState()
     val selectedModel by viewModel.selectedModel.collectAsState()
+    val targetLanguage by viewModel.targetLanguage.collectAsState()
     
     // File picker launcher
     val filePickerLauncher = rememberLauncherForActivityResult(
@@ -358,7 +359,7 @@ fun TranslateScreen(
                 onClick = {
                     coroutineScope.launch {
                         val app = context.applicationContext as com.vtu.translate.VtuTranslateApp
-                        val result = app.translationRepository.saveTranslatedFile()
+                        val result = app.translationRepository.saveTranslatedFile(targetLanguage)
                         
                         if (result.isSuccess) {
                             val filePath = result.getOrNull()
@@ -434,6 +435,7 @@ fun TranslateScreen(
                 itemsIndexed(stringResources) { index, resource ->
                     StringResourceItem(
                         resource = resource,
+                        targetLanguage = targetLanguage,
                         onTranslatedValueChange = { newValue ->
                             viewModel.updateTranslation(index, newValue)
                         }
@@ -447,7 +449,8 @@ fun TranslateScreen(
 @Composable
 fun StringResourceItem(
     resource: StringResource,
-    onTranslatedValueChange: (String) -> Unit
+    onTranslatedValueChange: (String) -> Unit,
+    targetLanguage: String = "vi"
 ) {
     // Kiểm tra xem chuỗi có phải là chuỗi đặc biệt thực sự hay không
     // Chỉ đánh dấu là chuỗi đặc biệt nếu nó thỏa mãn các điều kiện của isSpecialNonTranslatableString
@@ -517,11 +520,24 @@ fun StringResourceItem(
                 modifier = Modifier.fillMaxWidth()
             )
             
-            // Translated value
+            // Translated value with dynamic label based on target language
+            val translatedValueLabelId = when (targetLanguage) {
+                "vi" -> R.string.translated_value_vi
+                "en" -> R.string.translated_value_en
+                "zh" -> R.string.translated_value_zh
+                "ru" -> R.string.translated_value_ru
+                "ko" -> R.string.translated_value_ko
+                "es" -> R.string.translated_value_es
+                "fr" -> R.string.translated_value_fr
+                "de" -> R.string.translated_value_de
+                "ja" -> R.string.translated_value_ja
+                else -> R.string.translated_value_default
+            }
+            
             OutlinedTextField(
                 value = resource.translatedValue,
                 onValueChange = onTranslatedValueChange,
-                label = { Text(stringResource(R.string.translated_value)) },
+                label = { Text(stringResource(translatedValueLabelId)) },
                 modifier = Modifier.fillMaxWidth(),
                 enabled = !resource.isTranslating,
                 colors = OutlinedTextFieldDefaults.colors(
