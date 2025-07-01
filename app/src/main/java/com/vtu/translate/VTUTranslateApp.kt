@@ -28,6 +28,6 @@ class VtuTranslateApp : Application() {
         preferencesRepository = PreferencesRepository(this)
         groqRepository = GroqRepository(preferencesRepository)
         logRepository = LogRepository()
-        translationRepository = TranslationRepository(groqRepository, logRepository)
+        translationRepository = TranslationRepository(groqRepository, logRepository, this)
     }
 }

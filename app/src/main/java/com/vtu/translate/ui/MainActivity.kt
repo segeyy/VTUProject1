@@ -1,5 +1,8 @@
 package com.vtu.translate.ui
 
+import android.content.Context
+import android.content.res.Configuration
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -13,10 +16,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.lifecycleScope
 import com.vtu.translate.VtuTranslateApp
 import com.vtu.translate.ui.navigation.AppNavigation
 import com.vtu.translate.ui.theme.VTUTranslateTheme
 import com.vtu.translate.ui.viewmodel.MainViewModel
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+import java.util.Locale
 
 class MainActivity : ComponentActivity() {
     
@@ -26,6 +33,20 @@ class MainActivity : ComponentActivity() {
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
+        // Apply saved language setting
+        lifecycleScope.launch {
+            val savedLanguage = viewModel.appLanguage.first()
+            applyLanguage(savedLanguage)
+        }
+        
+        // Listen for language changes
+        lifecycleScope.launch {
+            viewModel.appLanguage.collect { languageCode ->
+                applyLanguage(languageCode)
+            }
+        }
+        
         setContent {
             val isDarkTheme by viewModel.isDarkTheme.collectAsState()
             
@@ -37,6 +58,36 @@ class MainActivity : ComponentActivity() {
                     MainScreen(viewModel)
                 }
             }
+        }
+    }
+    
+    /**
+     * Apply language setting to the app
+     */
+    private fun applyLanguage(languageCode: String) {
+        val locale = when (languageCode) {
+            "system" -> {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                    resources.configuration.locales.get(0)
+                } else {
+                    @Suppress("DEPRECATION")
+                    resources.configuration.locale
+                }
+            }
+            "vi" -> Locale("vi")
+            "en" -> Locale("en")
+            else -> Locale("en") // Default to English
+        }
+        
+        Locale.setDefault(locale)
+        val config = Configuration(resources.configuration)
+        config.setLocale(locale)
+        
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            createConfigurationContext(config)
+        } else {
+            @Suppress("DEPRECATION")
+            resources.updateConfiguration(config, resources.displayMetrics)
         }
     }
 }
