@@ -86,12 +86,34 @@ class GroqRepository(private val preferencesRepository: PreferencesRepository) {
                 return Result.failure(Exception("Model is not selected"))
             }
             
-            val prompt = "Translate the following Android string resource value into Vietnamese. Do not add explanations or surrounding quotes. Return ONLY the translated text. IMPORTANT: Do NOT translate technical identifiers, package names (like androidx.startup), class names, URLs, placeholders, or format specifiers (like %s, %d). Keep those exactly as they are in the original text. Original text: \"$text\""
-            
+            val prompt = """You are an expert translator for Android applications, specializing in translating English string resources into Vietnamese. Your task is to translate the user-provided text while strictly adhering to the following rules:
+
+1.  **Translate only the user-facing text.**
+2.  **DO NOT translate technical identifiers,** package names (e.g., `androidx.startup`), class names, URLs, or XML tags.
+3.  **PRESERVE placeholders and format specifiers** exactly as they are (e.g., `%s`, `%1$d`, `\n`).
+4.  **Return ONLY the translated text,** without any extra explanations, comments, or surrounding quotes.
+
+Here are some examples:
+
+-   **Input:** `Settings`
+    **Output:** `Cài đặt`
+
+-   **Input:** `Selected model: %s`
+    **Output:** `Model đã chọn: %s`
+
+-   **Input:** `An error occurred: %s. Please check the logs.`
+    **Output:** `Đã xảy ra lỗi: %s. Vui lòng kiểm tra nhật ký.`
+
+-   **Input:** `You must set the API Key in Settings.`
+    **Output:** `Bạn phải đặt API Key trong Cài đặt.`
+
+Now, translate the following text:
+"""$text""""
+
             val request = ChatCompletionRequest(
                 model = model,
                 messages = listOf(ChatMessage(role = "user", content = prompt)),
-                temperature = 0.7
+                temperature = 0.2
             )
             
             // Implement retry with exponential backoff for HTTP 429 errors

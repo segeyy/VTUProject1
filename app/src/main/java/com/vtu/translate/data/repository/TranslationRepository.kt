@@ -6,8 +6,6 @@ import android.os.Environment
 import com.vtu.translate.data.model.LogType
 import com.vtu.translate.data.model.StringResource
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -124,16 +122,20 @@ class TranslationRepository(
      * @return True if the string is a special non-translatable string
      */
     private fun isSpecialNonTranslatableString(value: String): Boolean {
-        // Improved regex for package names, class names, or other technical strings
-        val isPackageOrClass = value.matches(Regex("^[a-z0-9]+(?:\\.[a-zA-Z0-9]+)+$"))
-        val isConstantName = value.matches(Regex("^[A-Z_0-9]+$"))
-        val isUrl = value.startsWith("http://") || value.startsWith("https://")
-        val isSpecificPackage = value.startsWith("androidx.") || value.startsWith("android.") || value.startsWith("com.google") || value.startsWith("com.facebook")
-        val containsPlaceholder = value.matches(Regex(".*(\\{d+\}|%[\\d\\$]*[sdfltux]).*"))
-        val isNumeric = value.matches(Regex("^[\\d\\.,]+$"))
-        val isEmpty = value.trim().isEmpty()
-
-        return isPackageOrClass || isConstantName || isUrl || isSpecificPackage || containsPlaceholder || isNumeric || isEmpty
+        // Check for package names, class names, or other technical strings
+        return value.matches(Regex("^[a-zA-Z0-9]+(\\.[a-zA-Z0-9]+)+$")) || // Package names like androidx.startup
+               value.matches(Regex("^[A-Z][a-zA-Z0-9]*$")) || // Class names like MainActivity
+               value.matches(Regex("^[a-zA-Z0-9_]+$")) || // Simple technical identifiers
+               value.startsWith("http://") || value.startsWith("https://") || // URLs
+               value.startsWith("androidx.") || // Specific package prefixes
+               value.startsWith("android.") ||
+               value.startsWith("java.") ||
+               value.startsWith("kotlin.") ||
+               value.contains("@") || // Email addresses or resource references
+               value.matches(Regex(".*\\{.*\\}.*")) || // Strings with placeholders like {0}
+               value.matches(Regex(".*%[sdfx].*")) || // Format specifiers like %s, %d
+               value.matches(Regex("^[0-9]+$")) || // Pure numbers
+               value.trim().isEmpty() // Empty strings
     }
     
     /**
@@ -144,16 +146,23 @@ class TranslationRepository(
      */
     private fun getSpecialCaseTranslation(value: String): String {
         // For technical strings, we keep them as-is without translation
-        return value
+        return when {
+            value.startsWith("androidx.") -> value // Keep package names as-is
+            value.startsWith("android.") -> value
+            value.startsWith("java.") -> value
+            value.startsWith("kotlin.") -> value
+            value.startsWith("http") -> value // Keep URLs as is
+            else -> value // Keep as is if no special handling defined
+        }
     }
     
     /**
-     * Biến để kiểm soát việc dừng quá trình dịch
+     * Boolean to control whether to stop the translation process
      */
     private var shouldStopTranslation = false
     
     /**
-     * Dừng quá trình dịch
+     * Stop the current translation process
      */
     fun stopTranslation() {
         shouldStopTranslation = true
@@ -161,7 +170,7 @@ class TranslationRepository(
     }
     
     /**
-    * Translate all string resources
+     * Translate all string resources
      */
     suspend fun translateAll(): Result<Unit> {
         return withContext(Dispatchers.IO) {
@@ -179,48 +188,50 @@ class TranslationRepository(
                 // Create a mutable copy of the resources
                 val updatedResources = resources.toMutableList()
                 
-                val updatedResources = resources.toMutableList()
+                // Translate all resources concurrently
                 val translationJobs = resources.mapIndexed { index, resource ->
-                    async(Dispatchers.IO) {
-                        if (shouldStopTranslation) return@async
-
-                        if (resource.translatedValue.isNotBlank() && !resource.hasError) {
-                            return@async
+                    async {
+                        // Check if translation should be stopped
+                        if (shouldStopTranslation) {
+                            return@async null
                         }
 
-                        // Update status to translating
-                        updatedResources[index] = resource.copy(isTranslating = true)
-                        _stringResources.value = updatedResources.toList()
-
-                        var attempt = 0
-                        var success = false
-                        while (attempt < 3 && !success && !shouldStopTranslation) {
-                            val result = groqRepository.translateText(resource.value)
-                            if (result.isSuccess) {
-                                val translatedText = result.getOrNull() ?: ""
-                                updatedResources[index] = resource.copy(
-                                    translatedValue = translatedText,
-                                    isTranslating = false,
-                                    hasError = false
-                                )
-                                logRepository.logSuccess("Dịch thành công key '${resource.name}'.")
-                                success = true
-                            } else {
-                                val errorMessage = result.exceptionOrNull()?.message ?: "Unknown error"
-                                if (errorMessage.contains("429")) {
-                                    logRepository.logWarning("Rate limit hit for key '${resource.name}'. Retrying after delay...")
-                                    delay(2000L * (attempt + 1)) // Exponential backoff
-                                } else {
-                                    updatedResources[index] = resource.copy(isTranslating = false, hasError = true)
-                                    logRepository.logError("Dịch thất bại key '${resource.name}'. Lỗi: $errorMessage.")
-                                    break // Stop retrying for non-rate-limit errors
-                                }
+                        // Only translate strings that haven't been translated yet
+                        if (resource.translatedValue == null) {
+                            // Update isTranslating status
+                            withContext(Dispatchers.Main) {
+                                updatedResources[index] = resource.copy(isTranslating = true)
+                                _stringResources.value = updatedResources.toList()
                             }
-                            attempt++
+
+                            logRepository.log(LogType.INFO, "Translating string [${resource.name}]: '${resource.value}'")
+
+                            val result = groqRepository.translateText(resource.value)
+                            result.onSuccess {
+                                withContext(Dispatchers.Main) {
+                                    updatedResources[index] = resource.copy(
+                                        translatedValue = it,
+                                        isTranslating = false,
+                                        hasError = false
+                                    )
+                                    _stringResources.value = updatedResources.toList()
+                                }
+                                logRepository.log(LogType.SUCCESS, "Successfully translated string [${resource.name}]: '$it'")
+                            }.onFailure {
+                                withContext(Dispatchers.Main) {
+                                    updatedResources[index] = resource.copy(
+                                        isTranslating = false,
+                                        hasError = true
+                                    )
+                                    _stringResources.value = updatedResources.toList()
+                                }
+                                logRepository.log(LogType.ERROR, "Error translating string [${resource.name}]: ${it.message}")
+                            }
                         }
-                        _stringResources.value = updatedResources.toList()
                     }
                 }
+
+                // Wait for all translation jobs to complete
                 translationJobs.awaitAll()
                 
                 _isTranslating.value = false
@@ -269,24 +280,12 @@ class TranslationRepository(
                     serializer.attribute("", "name", resource.name)
                     
                     // Use translated value if available, otherwise use original
-                    var value = if (resource.translatedValue.isNotBlank()) {
+                    val value = if (resource.translatedValue.isNotBlank()) {
                         resource.translatedValue
                     } else {
                         resource.value
                     }
-
-                    // Handle special XML characters
-                    value = value.replace("&", "&amp;")
-                                 .replace("<", "&lt;")
-                                 .replace(">", "&gt;")
-                                 .replace("\"", "&quot;")
-                                 .replace("'", "&apos;")
-
-                    // Preserve placeholders like %1$s
-                    if (value.contains("%")) {
-                        value = "<![CDATA[$value]]>"
-                    }
-
+                    
                     serializer.text(value)
                     serializer.endTag("", "string")
                 }
