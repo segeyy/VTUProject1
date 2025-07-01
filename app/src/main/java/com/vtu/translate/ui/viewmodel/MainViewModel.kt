@@ -29,6 +29,8 @@ class MainViewModel(
     val apiKey = preferencesRepository.apiKey
     val selectedModel = preferencesRepository.selectedModel
     val appLanguage = preferencesRepository.appLanguage
+    val isDarkTheme = preferencesRepository.isDarkTheme
+    val translationSpeed = preferencesRepository.translationSpeed
     val stringResources = translationRepository.stringResources
     val isTranslating = translationRepository.isTranslating
     val selectedFileName = translationRepository.selectedFileName
@@ -60,6 +62,20 @@ class MainViewModel(
      */
     fun saveAppLanguage(language: String) {
         preferencesRepository.saveAppLanguage(language)
+    }
+    
+    /**
+     * Save dark theme preference
+     */
+    fun saveDarkTheme(isDark: Boolean) {
+        preferencesRepository.saveDarkTheme(isDark)
+    }
+    
+    /**
+     * Save translation speed preference
+     */
+    fun saveTranslationSpeed(speed: Int) {
+        preferencesRepository.saveTranslationSpeed(speed)
     }
     
     /**

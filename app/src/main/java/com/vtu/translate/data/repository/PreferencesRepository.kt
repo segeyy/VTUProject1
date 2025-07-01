@@ -18,12 +18,20 @@ class PreferencesRepository(context: Context) {
         private const val KEY_API_KEY = "groq_api_key"
         private const val KEY_SELECTED_MODEL = "selected_model"
         private const val KEY_APP_LANGUAGE = "app_language"
+        private const val KEY_DARK_THEME = "dark_theme"
+        private const val KEY_TRANSLATION_SPEED = "translation_speed"
         
         // Default model
         private const val DEFAULT_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct"
         
         // Default language (Vietnamese)
         private const val DEFAULT_LANGUAGE = "vi"
+        
+        // Default dark theme (true for dark mode)
+        private const val DEFAULT_DARK_THEME = true
+        
+        // Default translation speed (3 = normal speed)
+        private const val DEFAULT_TRANSLATION_SPEED = 3
     }
     
     private val _apiKey = MutableStateFlow<String>("")
@@ -34,6 +42,12 @@ class PreferencesRepository(context: Context) {
     
     private val _appLanguage = MutableStateFlow<String>(DEFAULT_LANGUAGE)
     val appLanguage: StateFlow<String> = _appLanguage.asStateFlow()
+    
+    private val _isDarkTheme = MutableStateFlow<Boolean>(DEFAULT_DARK_THEME)
+    val isDarkTheme: StateFlow<Boolean> = _isDarkTheme.asStateFlow()
+    
+    private val _translationSpeed = MutableStateFlow<Int>(DEFAULT_TRANSLATION_SPEED)
+    val translationSpeed: StateFlow<Int> = _translationSpeed.asStateFlow()
     
     private val encryptedPrefs: SharedPreferences
     
@@ -60,6 +74,8 @@ class PreferencesRepository(context: Context) {
         _apiKey.value = encryptedPrefs.getString(KEY_API_KEY, "") ?: ""
         _selectedModel.value = encryptedPrefs.getString(KEY_SELECTED_MODEL, DEFAULT_MODEL) ?: DEFAULT_MODEL
         _appLanguage.value = encryptedPrefs.getString(KEY_APP_LANGUAGE, DEFAULT_LANGUAGE) ?: DEFAULT_LANGUAGE
+        _isDarkTheme.value = encryptedPrefs.getBoolean(KEY_DARK_THEME, DEFAULT_DARK_THEME)
+        _translationSpeed.value = encryptedPrefs.getInt(KEY_TRANSLATION_SPEED, DEFAULT_TRANSLATION_SPEED)
     }
     
     /**
@@ -84,5 +100,21 @@ class PreferencesRepository(context: Context) {
     fun saveAppLanguage(language: String) {
         encryptedPrefs.edit().putString(KEY_APP_LANGUAGE, language).apply()
         _appLanguage.value = language
+    }
+    
+    /**
+     * Save dark theme preference
+     */
+    fun saveDarkTheme(isDark: Boolean) {
+        encryptedPrefs.edit().putBoolean(KEY_DARK_THEME, isDark).apply()
+        _isDarkTheme.value = isDark
+    }
+    
+    /**
+     * Save translation speed preference
+     */
+    fun saveTranslationSpeed(speed: Int) {
+        encryptedPrefs.edit().putInt(KEY_TRANSLATION_SPEED, speed).apply()
+        _translationSpeed.value = speed
     }
 }
