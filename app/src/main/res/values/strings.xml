@@ -12,7 +12,16 @@
     <string name="stop_translation">Stop Translation</string>
     <string name="save_translated_file">Save translated file</string>
     <string name="original_value">Value (original)</string>
-    <string name="translated_value">Value-vi (translated)</string>
+    <string name="translated_value_vi">Value-vi (translated)</string>
+    <string name="translated_value_en">Value-en (translated)</string>
+    <string name="translated_value_zh">Value-zh (translated)</string>
+    <string name="translated_value_ru">Value-ru (translated)</string>
+    <string name="translated_value_ko">Value-ko (translated)</string>
+    <string name="translated_value_es">Value-es (translated)</string>
+    <string name="translated_value_fr">Value-fr (translated)</string>
+    <string name="translated_value_de">Value-de (translated)</string>
+    <string name="translated_value_ja">Value-ja (translated)</string>
+    <string name="translated_value_default">Value-translated</string>
     <string name="no_file_selected">No file selected</string>
     <string name="translating">Translating…</string>
     <string name="translation_completed">Translation completed</string>
@@ -47,9 +56,9 @@
     <string name="continue_translation">Continue Translation</string>
     
     <!-- About -->
-    <string name="about_title">Giới thiệu</string>
-    <string name="about_subtitle">Thông tin ứng dụng</string>
-    <string name="app_version">Phiên bản</string>
+    <string name="about_title">About</string>
+    <string name="about_subtitle">App Information</string>
+    <string name="app_version">Version</string>
     
     <!-- Language Settings -->
     <string name="language_settings">Language Settings</string>
