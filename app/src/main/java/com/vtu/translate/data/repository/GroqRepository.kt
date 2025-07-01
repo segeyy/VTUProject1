@@ -86,15 +86,11 @@ class GroqRepository(private val preferencesRepository: PreferencesRepository) {
                 return Result.failure(Exception("Model is not selected"))
             }
             
-            val systemPrompt = "You are an expert translator specializing in translating Android string resources from English to Vietnamese. Your task is to translate the user-provided text accurately while strictly preserving all technical, non-translatable elements. Do not provide any explanations, apologies, or surrounding text. Return only the translated string."
-            val userPrompt = "Translate the following string to Vietnamese. Remember the rules: keep all placeholders (like %1$s, {0}), HTML tags (like <b>, <i>), URLs, and any other code-like syntax exactly as they are. For example, if the input is 'Copied %1$d of %2$d files.', the output should be 'Đã sao chép %1$d trong tổng số %2$d tệp.'. Now, translate this: \"$text\""
+            val prompt = "Translate the following Android string resource value into Vietnamese. Do not add explanations or surrounding quotes. Return ONLY the translated text. IMPORTANT: Do NOT translate technical identifiers, package names (like androidx.startup), class names, URLs, placeholders, or format specifiers (like %s, %d). Keep those exactly as they are in the original text. Original text: \"$text\""
             
             val request = ChatCompletionRequest(
                 model = model,
-                messages = listOf(
-                    ChatMessage(role = "system", content = systemPrompt),
-                    ChatMessage(role = "user", content = userPrompt)
-                ),
+                messages = listOf(ChatMessage(role = "user", content = prompt)),
                 temperature = 0.7
             )
             
