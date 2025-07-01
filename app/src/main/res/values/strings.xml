@@ -51,7 +51,7 @@
     
     <!-- Language Settings -->
     <string name="language_settings">Language Settings</string>
-    <string name="app_language">App Language</string>
+    <string name="app_language_en">App Language</string>
     <string name="language_vietnamese">Vietnamese</string>
     <string name="language_english">English</string>
     <string name="language_saved">Language settings saved</string>
