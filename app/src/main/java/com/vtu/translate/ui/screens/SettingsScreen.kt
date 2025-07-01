@@ -413,8 +413,6 @@ fun InterfaceSettingsSection(
     isDarkTheme: Boolean,
     modifier: Modifier = Modifier
 ) {
-    val context = LocalContext.current
-    
     SettingsSectionCard(
         title = stringResource(R.string.interface_title),
         icon = R.drawable.ic_interface,
