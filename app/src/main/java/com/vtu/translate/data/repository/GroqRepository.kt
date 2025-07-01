@@ -72,7 +72,84 @@ class GroqRepository(private val preferencesRepository: PreferencesRepository) {
     }
     
     /**
-     * Translate text using Groq API
+     * Translate text using Groq API with language direction support
+     */
+    suspend fun translateTextWithLanguages(text: String, fromLanguage: String, toLanguage: String): Result<String> {
+        return try {
+            val apiKey = preferencesRepository.apiKey.first()
+            if (apiKey.isBlank()) {
+                return Result.failure(Exception("API Key is not set"))
+            }
+            
+            val model = preferencesRepository.selectedModel.first()
+            if (model.isBlank()) {
+                return Result.failure(Exception("Model is not selected"))
+            }
+            
+            // Create language-specific prompt
+            val languageMap = mapOf(
+                "vi" to "Vietnamese",
+                "en" to "English",
+                "es" to "Spanish",
+                "fr" to "French",
+                "de" to "German",
+                "ja" to "Japanese",
+                "ko" to "Korean",
+                "zh" to "Chinese"
+            )
+            
+            val fromLangName = languageMap[fromLanguage] ?: fromLanguage
+            val toLangName = languageMap[toLanguage] ?: toLanguage
+            
+            val prompt = "Translate the following Android string resource value from $fromLangName to $toLangName. Do not add explanations or surrounding quotes. Return ONLY the translated text. IMPORTANT: Do NOT translate technical identifiers, package names (like androidx.startup), class names, URLs, placeholders, or format specifiers (like %s, %d). Keep those exactly as they are in the original text. Original text: \"$text\""
+            
+            val request = ChatCompletionRequest(
+                model = model,
+                messages = listOf(ChatMessage(role = "user", content = prompt)),
+                temperature = 0.7
+            )
+            
+            // Implement retry with exponential backoff for HTTP 429 errors
+            val maxRetries = 3
+            var retryCount = 0
+            var lastException: Exception? = null
+            
+            while (retryCount < maxRetries) {
+                try {
+                    val response = groqService.createChatCompletion("Bearer $apiKey", request)
+                    
+                    if (response.choices.isNotEmpty()) {
+                        return Result.success(response.choices[0].message.content.trim())
+                    } else {
+                        return Result.failure(Exception("No response from API"))
+                    }
+                } catch (e: HttpException) {
+                    // Handle HTTP 429 Too Many Requests
+                    if (e.code() == 429) {
+                        lastException = Exception("Rate limit exceeded (HTTP 429). Retrying...")
+                        Log.w("GroqRepository", "HTTP 429 received, retrying after delay. Attempt ${retryCount + 1}/$maxRetries")
+                        
+                        // Exponential backoff: 1s, 2s, 4s
+                        val delayMs = (1000L * Math.pow(2.0, retryCount.toDouble())).toLong()
+                        delay(delayMs)
+                        retryCount++
+                    } else {
+                        return Result.failure(e)
+                    }
+                } catch (e: Exception) {
+                    return Result.failure(e)
+                }
+            }
+            
+            // If we've exhausted all retries
+            Result.failure(lastException ?: Exception("Failed after $maxRetries retries"))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+    
+    /**
+     * Translate text using Groq API (legacy method for backwards compatibility)
      */
     suspend fun translateText(text: String): Result<String> {
         return try {

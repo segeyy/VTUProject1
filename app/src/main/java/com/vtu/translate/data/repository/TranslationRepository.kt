@@ -198,7 +198,11 @@ class TranslationRepository(
                     return@withContext Result.failure(Exception("No strings to translate"))
                 }
                 
-                logRepository.logInfo("Bắt đầu dịch ${resources.size} chuỗi với model [${groqRepository.getSelectedModel()}].")
+                // Determine the starting index based on continueFromIndex parameter
+                val startIndex = maxOf(0, continueFromIndex)
+                val remainingCount = resources.size - startIndex
+                
+                logRepository.logInfo("Bắt đầu dịch $remainingCount chuỗi (từ index $startIndex) với model [${groqRepository.getSelectedModel()}] sang ngôn ngữ '$targetLanguage'.")
                 
                 // Create a mutable copy of the resources
                 val updatedResources = resources.toMutableList()
@@ -207,8 +211,8 @@ class TranslationRepository(
                 val batchSize = 5
                 val delayBetweenBatchesMs = 1000L // 1 second delay between batches
                 
-                // Process in batches
-                for (batchStart in resources.indices step batchSize) {
+                // Process in batches, starting from the specified index
+                for (batchStart in startIndex until resources.size step batchSize) {
                     // Kiểm tra nếu người dùng đã yêu cầu dừng
                     if (shouldStopTranslation) {
                         logRepository.logInfo("Đã dừng quá trình dịch theo yêu cầu.")
@@ -233,8 +237,8 @@ class TranslationRepository(
                         updatedResources[i] = resource.copy(isTranslating = true)
                         _stringResources.value = updatedResources.toList()
                         
-                        // Translate the string
-                        val result = groqRepository.translateText(resource.value)
+                        // Translate the string based on isInverted and targetLanguage parameters
+                        val result = translateTextWithLanguages(resource.value, isInverted, targetLanguage)
                         
                         if (result.isSuccess) {
                             val translatedText = result.getOrNull() ?: ""
@@ -436,6 +440,19 @@ class TranslationRepository(
             }
         }
         return result ?: "Unknown file"
+    }
+    
+    /**
+     * Translate text with language direction support
+     */
+    private suspend fun translateTextWithLanguages(text: String, isInverted: Boolean, targetLanguage: String): Result<String> {
+        return if (isInverted) {
+            // Inverted: translate from targetLanguage to English
+            groqRepository.translateTextWithLanguages(text, fromLanguage = targetLanguage, toLanguage = "en")
+        } else {
+            // Normal: translate from English to targetLanguage  
+            groqRepository.translateTextWithLanguages(text, fromLanguage = "en", toLanguage = targetLanguage)
+        }
     }
     
     /**

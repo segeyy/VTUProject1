@@ -117,7 +117,9 @@ class MainViewModel(
      */
     fun startTranslation() {
         viewModelScope.launch {
-            translationRepository.translateAll()
+            val isInverted = isInvertedTranslate.value
+            val targetLang = targetLanguage.value
+            translationRepository.translateAll(isInverted, targetLang)
         }
     }
     
