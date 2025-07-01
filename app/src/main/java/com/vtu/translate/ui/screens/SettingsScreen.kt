@@ -41,7 +41,7 @@ import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Divider
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ElevatedButton
@@ -509,7 +509,7 @@ fun TranslationSettingsSection(
             }
         }
         
-        HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+        Divider(modifier = Modifier.padding(vertical = 8.dp))
         
         // Inverted translate switch
         Row(
@@ -534,7 +534,7 @@ fun TranslationSettingsSection(
             )
         }
         
-        HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+        Divider(modifier = Modifier.padding(vertical = 8.dp))
         
         // Translation speed slider
         Column {
@@ -755,7 +755,7 @@ fun ModelSelectionDropdown(
                     )
                 }
                 
-                HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+                Divider(modifier = Modifier.padding(vertical = 4.dp))
                 
                 // Deepseek & Meta models group
                 DropdownMenuItem(
