@@ -31,6 +31,8 @@ class MainViewModel(
     val appLanguage = preferencesRepository.appLanguage
     val isDarkTheme = preferencesRepository.isDarkTheme
     val translationSpeed = preferencesRepository.translationSpeed
+    val targetLanguage = preferencesRepository.targetLanguage
+    val isInvertedTranslate = preferencesRepository.isInvertedTranslate
     val stringResources = translationRepository.stringResources
     val isTranslating = translationRepository.isTranslating
     val selectedFileName = translationRepository.selectedFileName
@@ -76,6 +78,38 @@ class MainViewModel(
      */
     fun saveTranslationSpeed(speed: Int) {
         preferencesRepository.saveTranslationSpeed(speed)
+    }
+    
+    /**
+     * Save target language preference
+     */
+    fun saveTargetLanguage(language: String) {
+        preferencesRepository.saveTargetLanguage(language)
+    }
+    
+    /**
+     * Save inverted translate preference
+     */
+    fun saveInvertedTranslate(isInverted: Boolean) {
+        preferencesRepository.saveInvertedTranslate(isInverted)
+    }
+    
+    /**
+     * Continue translation from where it was stopped
+     */
+    fun continueTranslation() {
+        viewModelScope.launch {
+            val isInverted = isInvertedTranslate.value
+            val targetLang = targetLanguage.value
+            translationRepository.continueTranslation(isInverted, targetLang)
+        }
+    }
+    
+    /**
+     * Get current translation progress
+     */
+    fun getCurrentTranslationIndex(): Int {
+        return translationRepository.getCurrentTranslationIndex()
     }
     
     /**

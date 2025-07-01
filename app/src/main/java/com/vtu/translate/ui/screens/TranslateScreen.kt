@@ -310,6 +310,49 @@ fun TranslateScreen(
                 }
             }
             
+            // Continue translation button (only show if there's partially translated content)
+            val currentIndex = viewModel.getCurrentTranslationIndex()
+            if (currentIndex > 0 && currentIndex < stringResources.size && !isTranslating) {
+                Button(
+                    onClick = {
+                        if (apiKey.isBlank()) {
+                            Toast.makeText(
+                                context,
+                                context.getString(R.string.error_no_api_key),
+                                Toast.LENGTH_SHORT
+                            ).show()
+                            return@Button
+                        }
+                        
+                        if (selectedModel.isBlank()) {
+                            Toast.makeText(
+                                context,
+                                context.getString(R.string.error_no_model_selected),
+                                Toast.LENGTH_SHORT
+                            ).show()
+                            return@Button
+                        }
+                        
+                        viewModel.continueTranslation()
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.tertiary,
+                        contentColor = MaterialTheme.colorScheme.onTertiary
+                    )
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_start_translate),
+                        contentDescription = null,
+                        modifier = Modifier.padding(end = 8.dp)
+                    )
+                    Text(
+                        text = "${stringResource(R.string.continue_translation)} ($currentIndex/${stringResources.size})",
+                        style = MaterialTheme.typography.labelLarge
+                    )
+                }
+            }
+            
             // Save file button
             Button(
                 onClick = {

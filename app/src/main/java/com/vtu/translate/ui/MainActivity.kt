@@ -27,7 +27,9 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            VTUTranslateTheme {
+            val isDarkTheme by viewModel.isDarkTheme.collectAsState()
+            
+            VTUTranslateTheme(darkTheme = isDarkTheme) {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background

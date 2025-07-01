@@ -41,7 +41,7 @@ import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Divider
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ElevatedButton
@@ -468,11 +468,74 @@ fun TranslationSettingsSection(
     translationSpeed: Int,
     modifier: Modifier = Modifier
 ) {
+    val targetLanguage by viewModel.targetLanguage.collectAsState()
+    val isInvertedTranslate by viewModel.isInvertedTranslate.collectAsState()
+    
     SettingsSectionCard(
         title = stringResource(R.string.translation_settings_title),
         icon = R.drawable.ic_translate,
         modifier = modifier
     ) {
+        // Target language selection
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column {
+                Text(
+                    text = stringResource(R.string.target_language),
+                    style = MaterialTheme.typography.bodyLarge
+                )
+                Text(
+                    text = if (targetLanguage == "vi") "Tiếng Việt" else "English",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                )
+            }
+            
+            // Simple language toggle button
+            ElevatedButton(
+                onClick = {
+                    val newLanguage = if (targetLanguage == "vi") "en" else "vi"
+                    viewModel.saveTargetLanguage(newLanguage)
+                },
+                colors = ButtonDefaults.elevatedButtonColors(
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                )
+            ) {
+                Text(if (targetLanguage == "vi") "VI" else "EN")
+            }
+        }
+        
+        Divider(modifier = Modifier.padding(vertical = 8.dp))
+        
+        // Inverted translate switch
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column {
+                Text(
+                    text = stringResource(R.string.inverted_translate),
+                    style = MaterialTheme.typography.bodyLarge
+                )
+                Text(
+                    text = stringResource(R.string.inverted_translate_subtitle),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                )
+            }
+            Switch(
+                checked = isInvertedTranslate,
+                onCheckedChange = { viewModel.saveInvertedTranslate(it) }
+            )
+        }
+        
+        Divider(modifier = Modifier.padding(vertical = 8.dp))
+        
         // Translation speed slider
         Column {
             Text(

@@ -18,8 +18,10 @@ class PreferencesRepository(context: Context) {
         private const val KEY_API_KEY = "groq_api_key"
         private const val KEY_SELECTED_MODEL = "selected_model"
         private const val KEY_APP_LANGUAGE = "app_language"
+        private const val KEY_TARGET_LANGUAGE = "target_language"
         private const val KEY_DARK_THEME = "dark_theme"
         private const val KEY_TRANSLATION_SPEED = "translation_speed"
+        private const val KEY_INVERTED_TRANSLATE = "inverted_translate"
         
         // Default model
         private const val DEFAULT_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct"
@@ -49,6 +51,12 @@ class PreferencesRepository(context: Context) {
     private val _translationSpeed = MutableStateFlow<Int>(DEFAULT_TRANSLATION_SPEED)
     val translationSpeed: StateFlow<Int> = _translationSpeed.asStateFlow()
     
+    private val _targetLanguage = MutableStateFlow<String>("vi")
+    val targetLanguage: StateFlow<String> = _targetLanguage.asStateFlow()
+    
+    private val _isInvertedTranslate = MutableStateFlow<Boolean>(false)
+    val isInvertedTranslate: StateFlow<Boolean> = _isInvertedTranslate.asStateFlow()
+    
     private val encryptedPrefs: SharedPreferences
     
     init {
@@ -76,6 +84,8 @@ class PreferencesRepository(context: Context) {
         _appLanguage.value = encryptedPrefs.getString(KEY_APP_LANGUAGE, DEFAULT_LANGUAGE) ?: DEFAULT_LANGUAGE
         _isDarkTheme.value = encryptedPrefs.getBoolean(KEY_DARK_THEME, DEFAULT_DARK_THEME)
         _translationSpeed.value = encryptedPrefs.getInt(KEY_TRANSLATION_SPEED, DEFAULT_TRANSLATION_SPEED)
+        _targetLanguage.value = encryptedPrefs.getString(KEY_TARGET_LANGUAGE, "vi") ?: "vi"
+        _isInvertedTranslate.value = encryptedPrefs.getBoolean(KEY_INVERTED_TRANSLATE, false)
     }
     
     /**
@@ -116,5 +126,21 @@ class PreferencesRepository(context: Context) {
     fun saveTranslationSpeed(speed: Int) {
         encryptedPrefs.edit().putInt(KEY_TRANSLATION_SPEED, speed).apply()
         _translationSpeed.value = speed
+    }
+    
+    /**
+     * Save target language preference
+     */
+    fun saveTargetLanguage(language: String) {
+        encryptedPrefs.edit().putString(KEY_TARGET_LANGUAGE, language).apply()
+        _targetLanguage.value = language
+    }
+    
+    /**
+     * Save inverted translate preference
+     */
+    fun saveInvertedTranslate(isInverted: Boolean) {
+        encryptedPrefs.edit().putBoolean(KEY_INVERTED_TRANSLATE, isInverted).apply()
+        _isInvertedTranslate.value = isInverted
     }
 }

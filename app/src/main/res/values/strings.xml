@@ -40,9 +40,13 @@
     
     <!-- Translation Settings -->
     <string name="translation_settings_title">Cài đặt dịch</string>
-    <string name="translation_settings_subtitle">Tốc độ dịch, Batch size</string>
+    <string name="translation_settings_subtitle">Tốc độ dịch, Ngôn ngữ đích, Chế độ đảo</string>
     <string name="translation_speed">Tốc độ dịch</string>
     <string name="batch_size">Kích thước batch</string>
+    <string name="target_language">Ngôn ngữ đích</string>
+    <string name="inverted_translate">Chế độ đảo ngược dịch</string>
+    <string name="inverted_translate_subtitle">Dịch từ tiếng Việt sang tiếng Anh</string>
+    <string name="continue_translation">Tiếp tục dịch</string>
     
     <!-- About -->
     <string name="about_title">Giới thiệu</string>

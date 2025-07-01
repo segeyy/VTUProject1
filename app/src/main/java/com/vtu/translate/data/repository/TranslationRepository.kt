@@ -170,9 +170,24 @@ class TranslationRepository(
     }
     
     /**
+     * Get the current translation progress (for continuing translation)
+     */
+    fun getCurrentTranslationIndex(): Int {
+        val resources = _stringResources.value
+        return resources.indexOfFirst { it.translatedValue.isBlank() && !it.hasError }
+    }
+    
+    /**
+     * Continue translation from where it was stopped
+     */
+    suspend fun continueTranslation(isInverted: Boolean = false, targetLanguage: String = "vi"): Result<Unit> {
+        return translateAll(isInverted, targetLanguage, continueFromIndex = getCurrentTranslationIndex())
+    }
+    
+    /**
      * Translate all string resources
      */
-    suspend fun translateAll(): Result<Unit> {
+    suspend fun translateAll(isInverted: Boolean = false, targetLanguage: String = "vi", continueFromIndex: Int = 0): Result<Unit> {
         return withContext(Dispatchers.IO) {
             try {
                 _isTranslating.value = true

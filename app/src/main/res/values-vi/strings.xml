@@ -45,6 +45,12 @@
     <string name="log_type_error">LỖI</string>
     <string name="log_type_warning">CẢNH BÁO</string>
     
+    <!-- Translation Settings -->
+    <string name="target_language">Ngôn ngữ đích</string>
+    <string name="inverted_translate">Chế độ đảo ngược dịch</string>
+    <string name="inverted_translate_subtitle">Dịch từ tiếng Việt sang tiếng Anh</string>
+    <string name="continue_translation">Tiếp tục dịch</string>
+    
     <!-- Error Messages -->
     <string name="error_no_api_key">Vui lòng nhập API Key trong phần Cài đặt</string>
     <string name="error_no_model_selected">Vui lòng chọn Model AI trong phần Cài đặt</string>
