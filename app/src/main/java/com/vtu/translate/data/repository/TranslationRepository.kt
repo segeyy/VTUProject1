@@ -6,6 +6,8 @@ import android.os.Environment
 import com.vtu.translate.data.model.LogType
 import com.vtu.translate.data.model.StringResource
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -204,7 +206,7 @@ class TranslationRepository(
                                 _stringResources.value = updatedResources.toList()
                             }
 
-                            logRepository.log(LogType.INFO, "Translating string [${resource.name}]: '${resource.value}'")
+                            logRepository.logInfo("Translating string [${resource.name}]: '${resource.value}'")
 
                             val result = groqRepository.translateText(resource.value)
                             result.onSuccess {
@@ -216,7 +218,7 @@ class TranslationRepository(
                                     )
                                     _stringResources.value = updatedResources.toList()
                                 }
-                                logRepository.log(LogType.SUCCESS, "Successfully translated string [${resource.name}]: '$it'")
+                                logRepository.logSuccess("Successfully translated string [${resource.name}]: '$it'")
                             }.onFailure {
                                 withContext(Dispatchers.Main) {
                                     updatedResources[index] = resource.copy(
@@ -225,7 +227,7 @@ class TranslationRepository(
                                     )
                                     _stringResources.value = updatedResources.toList()
                                 }
-                                logRepository.log(LogType.ERROR, "Error translating string [${resource.name}]: ${it.message}")
+                                logRepository.logError("Error translating string [${resource.name}]: ${it.message}")
                             }
                         }
                     }

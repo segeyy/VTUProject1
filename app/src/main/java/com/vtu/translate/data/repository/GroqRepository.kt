@@ -108,7 +108,7 @@ Here are some examples:
     **Output:** `Bạn phải đặt API Key trong Cài đặt.`
 
 Now, translate the following text:
-"""$text""""
+"""$text"""
 
             val request = ChatCompletionRequest(
                 model = model,
