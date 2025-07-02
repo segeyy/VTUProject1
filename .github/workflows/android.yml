@@ -119,9 +119,10 @@ jobs:
         echo "build-success=true" >> $GITHUB_OUTPUT
       id: build-result
 
+    # SỬA LỖI 1: Nâng cấp upload-artifact lên v4
     - name: Upload APK (JDK ${{ matrix.java-version }})
       if: success() && steps.check-jdk.outputs.skip-build == 'false'
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: app-${{ steps.detect-project.outputs.BUILD_TYPE }}-jdk${{ matrix.java-version }}
         path: ${{ steps.detect-project.outputs.ANDROID_ROOT }}/build/outputs/apk/${{ steps.detect-project.outputs.BUILD_TYPE }}/*.apk
@@ -175,9 +176,10 @@ jobs:
           exit 1
         fi
 
+    # SỬA LỖI 2: Nâng cấp download-artifact lên v4
     - name: Download successful artifact
       if: steps.collect-results.outputs.final-success == 'true'
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: app-${{ steps.collect-results.outputs.build-type }}-jdk${{ steps.collect-results.outputs.success-jdk }}
 
@@ -187,9 +189,10 @@ jobs:
         # Đổi tên file APK
         mv *.apk final-app-${{ steps.collect-results.outputs.build-type }}.apk
 
+    # SỬA LỖI 3: Nâng cấp upload-artifact lên v4
     - name: Upload final APK
       if: steps.collect-results.outputs.final-success == 'true'
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: final-app
         path: final-app-${{ steps.collect-results.outputs.build-type }}.apk
