@@ -1,4 +1,4 @@
-name: Smart Android CI with JDK Fallback
+name: Auto Build APK
 
 on:
   push:
