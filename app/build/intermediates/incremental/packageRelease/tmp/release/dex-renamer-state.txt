@@ -1,0 +1,7 @@
+#Tue Jul 01 13:13:20 ICT 2025
+base.1=C\:\\Users\\RenjiYuusei\\Documents\\GitHub\\VTU-Translate-Tool\\app\\build\\intermediates\\dex\\release\\mergeDexRelease\\classes2.dex
+path.1=classes2.dex
+base.0=C\:\\Users\\RenjiYuusei\\Documents\\GitHub\\VTU-Translate-Tool\\app\\build\\intermediates\\dex\\release\\mergeDexRelease\\classes.dex
+renamed.1=classes2.dex
+renamed.0=classes.dex
+path.0=classes.dex
