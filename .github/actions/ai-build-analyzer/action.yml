@@ -1,0 +1,26 @@
+name: 'AI Build Failure Analyzer'
+description: 'Phân tích lỗi build Android bằng Hugging Face StarCoder'
+inputs:
+  android-root:
+    description: 'Đường dẫn gốc Android project'
+    required: true
+  build-type:
+    description: 'Loại build (debug/release)'
+    required: true
+  gradle-version:
+    description: 'Phiên bản Gradle'
+    required: true
+runs:
+  using: 'composite'
+  steps:
+    - name: Analyze with AI
+      shell: bash
+      env:
+        HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        chmod +x $GITHUB_ACTION_PATH/analyze.sh
+        $GITHUB_ACTION_PATH/analyze.sh \
+          "${{ inputs.android-root }}" \
+          "${{ inputs.build-type }}" \
+          "${{ inputs.gradle-version }}"
