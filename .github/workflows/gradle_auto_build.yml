@@ -10,10 +10,6 @@ jobs:
   detect-and-build:
     name: "Build on ${{ github.ref_name }}"
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        java-version: [17]
-      fail-fast: false
 
     steps:
     - name: Checkout code
@@ -41,30 +37,30 @@ jobs:
           echo "BUILD_TYPE=debug" >> $GITHUB_OUTPUT
         fi
 
-        # Phát hiện JDK ưu tiên từ gradle.properties
-        if [ -f "gradle.properties" ]; then
-          if grep -q "javaToolchainVersion=21" gradle.properties; then
-            echo "PREFERRED_JDK=21" >> $GITHUB_OUTPUT
-          elif grep -q "javaToolchainVersion=17" gradle.properties; then
-            echo "PREFERRED_JDK=17" >> $GITHUB_OUTPUT
-          fi
-        fi
-
-    - name: Setup JDK ${{ matrix.java-version }}
+    - name: Setup JDK 17
       uses: actions/setup-java@v3
       with:
-        java-version: ${{ matrix.java-version }}
+        java-version: 17
         distribution: 'temurin'
         cache: 'gradle'
 
-    # CÀI ĐẶT GRADLE MỚI NHẤT
+    # TỰ ĐỘNG CÀI GRADLE MỚI NHẤT
     - name: Install Latest Gradle
+      id: install-gradle
       run: |
-        # Tải và cài đặt Gradle 8.5 (phiên bản ổn định mới nhất)
-        wget https://services.gradle.org/distributions/gradle-8.5-bin.zip
-        sudo unzip -d /opt/gradle gradle-8.5-bin.zip
-        echo "GRADLE_HOME=/opt/gradle/gradle-8.5" >> $GITHUB_ENV
-        echo "/opt/gradle/gradle-8.5/bin" >> $GITHUB_PATH
+        # Lấy phiên bản Gradle mới nhất từ metadata chính thức
+        LATEST_GRADLE=$(curl -s https://services.gradle.org/versions/current | jq -r '.version')
+        echo "Latest Gradle version: $LATEST_GRADLE"
+        
+        # Tải và cài đặt Gradle
+        wget https://services.gradle.org/distributions/gradle-$LATEST_GRADLE-bin.zip
+        sudo unzip -d /opt/gradle gradle-$LATEST_GRADLE-bin.zip
+        echo "GRADLE_HOME=/opt/gradle/gradle-$LATEST_GRADLE" >> $GITHUB_ENV
+        echo "/opt/gradle/gradle-$LATEST_GRADLE/bin" >> $GITHUB_PATH
+        
+        # Xuất phiên bản để sử dụng sau này
+        echo "GRADLE_VERSION=$LATEST_GRADLE" >> $GITHUB_ENV
+        echo "GRADLE_VERSION=$LATEST_GRADLE" >> $GITHUB_OUTPUT
 
     - name: Cache Gradle dependencies
       uses: actions/cache@v3
@@ -72,9 +68,10 @@ jobs:
         path: |
           ~/.gradle/caches
           ~/.gradle/wrapper
-        key: ${{ runner.os }}-gradle-${{ matrix.java-version }}-${{ hashFiles('**/*.gradle*') }}
+        key: ${{ runner.os }}-gradle-17-${{ steps.install-gradle.outputs.GRADLE_VERSION }}-${{ hashFiles('**/*.gradle*') }}
         restore-keys: |
-          ${{ runner.os }}-gradle-${{ matrix.java-version }}-
+          ${{ runner.os }}-gradle-17-${{ steps.install-gradle.outputs.GRADLE_VERSION }}-
+          ${{ runner.os }}-gradle-17-
           ${{ runner.os }}-gradle-
 
     - name: Setup Android SDK
@@ -86,15 +83,16 @@ jobs:
         sdkmanager "platform-tools" "platforms;android-34"
 
     # SỬ DỤNG GRADLE TỪ PATH MỚI
-    - name: Build with JDK ${{ matrix.java-version }}
+    - name: Build APK
       run: |
+        echo "Using Gradle $GRADLE_VERSION"
         gradle assemble${{ steps.detect-project.outputs.BUILD_TYPE }} --stacktrace --info
 
     - name: Upload APK
       if: success()
       uses: actions/upload-artifact@v4
       with:
-        name: app-${{ steps.detect-project.outputs.BUILD_TYPE }}-jdk${{ matrix.java-version }}
+        name: app-${{ steps.detect-project.outputs.BUILD_TYPE }}
         path: "${{ steps.detect-project.outputs.ANDROID_ROOT }}/build/outputs/apk/${{ steps.detect-project.outputs.BUILD_TYPE }}/*.apk"
         retention-days: 7
 
@@ -105,30 +103,23 @@ jobs:
     if: always()
     
     steps:
-    - name: Determine successful build
+    - name: Check build status
       id: check-success
       run: |
-        # Tìm bất kỳ job build nào thành công
         if [[ '${{ needs.detect-and-build.result }}' == 'success' ]]; then
           echo "final-success=true" >> $GITHUB_OUTPUT
-          # Giả sử chúng ta chọn JDK 17 nếu có, không thì JDK 21
-          if [[ '${{ needs.detect-and-build.outputs.PREFERRED_JDK }}' == '17' ]]; then
-            echo "success-jdk=17" >> $GITHUB_OUTPUT
-          else
-            echo "success-jdk=21" >> $GITHUB_OUTPUT
-          fi
           echo "build-type=${{ needs.detect-and-build.outputs.BUILD_TYPE }}" >> $GITHUB_OUTPUT
         else
           echo "final-success=false" >> $GITHUB_OUTPUT
-          echo "::error::All build attempts failed!"
+          echo "::error::Build failed!"
           exit 1
         fi
 
-    - name: Download successful artifact
+    - name: Download artifact
       if: steps.check-success.outputs.final-success == 'true'
       uses: actions/download-artifact@v4
       with:
-        name: app-${{ steps.check-success.outputs.build-type }}-jdk${{ steps.check-success.outputs.success-jdk }}
+        name: app-${{ steps.check-success.outputs.build-type }}
         path: downloaded-artifact
 
     - name: Prepare final APK
@@ -153,7 +144,7 @@ jobs:
             issue_number: context.issue.number,
             owner: context.repo.owner,
             repo: context.repo.repo,
-            body: `✅ Build succeeded! 
+            body: `✅ Build succeeded using Gradle ${{ env.GRADLE_VERSION }}! 
             Download: [final-app.apk](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts)`
           })
 
@@ -166,6 +157,6 @@ jobs:
             issue_number: context.issue.number,
             owner: context.repo.owner,
             repo: context.repo.repo,
-            body: `❌ All build attempts failed! 
+            body: `❌ Build failed using Gradle ${{ env.GRADLE_VERSION }}! 
             Check logs: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}`
           })
