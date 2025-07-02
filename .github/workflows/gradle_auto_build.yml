@@ -88,6 +88,15 @@ jobs:
         echo "Using Gradle $GRADLE_VERSION"
         gradle assemble${{ steps.detect-project.outputs.BUILD_TYPE }} --stacktrace --info
 
+    # THÊM BƯỚC AI PHÂN TÍCH KHI FAIL
+    - name: AI Build Failure Analysis
+      if: failure()
+      uses: ./.github/actions/ai-build-analyzer
+      with:
+        android-root: ${{ steps.detect-project.outputs.ANDROID_ROOT }}
+        build-type: ${{ steps.detect-project.outputs.BUILD_TYPE }}
+        gradle-version: ${{ env.GRADLE_VERSION }}
+
     - name: Upload APK
       if: success()
       uses: actions/upload-artifact@v4
