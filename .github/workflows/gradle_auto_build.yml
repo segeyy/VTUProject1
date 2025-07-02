@@ -88,6 +88,10 @@ jobs:
         echo "Using Gradle $GRADLE_VERSION"
         gradle assemble${{ steps.detect-project.outputs.BUILD_TYPE }} --stacktrace --info
 
+    # CẤP QUYỀN PHÂN TÍCH
+    - name: Make AI scripts executable
+      run: chmod +x .github/actions/ai-build-analyzer/analyze.sh
+
     # THÊM BƯỚC AI PHÂN TÍCH KHI FAIL
     - name: AI Build Failure Analysis
       if: failure()
