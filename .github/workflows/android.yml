@@ -57,11 +57,14 @@ jobs:
         distribution: 'temurin'
         cache: 'gradle'
 
-    - name: Install Gradle
+    # CÀI ĐẶT GRADLE MỚI NHẤT
+    - name: Install Latest Gradle
       run: |
-        # Cài đặt Gradle (phiên bản mặc định hoặc chỉ định)
-        sudo apt-get update
-        sudo apt-get install -y gradle
+        # Tải và cài đặt Gradle 8.5 (phiên bản ổn định mới nhất)
+        wget https://services.gradle.org/distributions/gradle-8.5-bin.zip
+        sudo unzip -d /opt/gradle gradle-8.5-bin.zip
+        echo "GRADLE_HOME=/opt/gradle/gradle-8.5" >> $GITHUB_ENV
+        echo "/opt/gradle/gradle-8.5/bin" >> $GITHUB_PATH
 
     - name: Cache Gradle dependencies
       uses: actions/cache@v3
@@ -82,10 +85,10 @@ jobs:
         yes | sdkmanager --licenses || true
         sdkmanager "platform-tools" "platforms;android-34"
 
-    # SỬA: Sử dụng gradle thay vì gradlew
+    # SỬ DỤNG GRADLE TỪ PATH MỚI
     - name: Build with JDK ${{ matrix.java-version }}
       run: |
-        gradle assemble${{ steps.detect-project.outputs.BUILD_TYPE }} --stacktrace
+        gradle assemble${{ steps.detect-project.outputs.BUILD_TYPE }} --stacktrace --info
 
     - name: Upload APK
       if: success()
