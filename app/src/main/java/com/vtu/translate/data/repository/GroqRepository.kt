@@ -85,11 +85,15 @@ class GroqRepository(private val preferencesRepository: PreferencesRepository) {
     }
     
     /**
-     * Translate text using Groq API with language direction support
-     * 
-     * APPLIED 6 PRINCIPLES OF EXCELLENT TRANSLATION:
-     * 1. Technical preservation 2. String name analysis 3. Polysemy handling
-     * 4. Mobile optimization 5. Risk check 6. Prompt standard translation
+     * Translates the given text from one language to another using the Groq API, applying context-aware translation principles.
+     *
+     * Analyzes the optional string resource name to infer UI context, then constructs a detailed translation prompt that incorporates six principles of excellent translation, including technical preservation and context-specific guidelines. Returns the translated text or a failure if the API key or model is missing, or if an error occurs during the request.
+     *
+     * @param text The text to translate.
+     * @param fromLanguage The source language code.
+     * @param toLanguage The target language code.
+     * @param stringName Optional string resource name used to determine UI context for improved translation accuracy.
+     * @return A [Result] containing the translated text on success, or an exception on failure.
      */
     suspend fun translateTextWithLanguages(
         text: String, 
@@ -126,7 +130,16 @@ class GroqRepository(private val preferencesRepository: PreferencesRepository) {
     }
     
     /**
-     * Create optimal translation prompts based on 6 principles
+     * Constructs a detailed translation prompt for the Groq API, applying six key translation principles and context-specific guidelines.
+     *
+     * The prompt includes preservation of technical elements, context type and information, length optimization rules, Vietnamese language usage, and output formatting. Additional UI context-specific rules are appended based on the provided context type.
+     *
+     * @param text The original string resource value to be translated.
+     * @param fromLanguage The source language code.
+     * @param toLanguage The target language code.
+     * @param contextType The inferred UI context type (e.g., button, title), or null if unknown.
+     * @param contextInfo Detailed context information about the string resource.
+     * @return A formatted prompt string for use with the translation API.
      */
     private fun buildTranslationPrompt(
         text: String,
@@ -172,7 +185,10 @@ class GroqRepository(private val preferencesRepository: PreferencesRepository) {
     }
     
     /**
-     * Context analysis based on string name
+     * Analyzes a string resource name to infer its UI context and provide descriptive context information.
+     *
+     * @param stringName The resource name to analyze, or null if unavailable.
+     * @return A pair containing the detected context type key (or null) and a detailed context info string.
      */
     private fun analyzeStringContext(stringName: String?): Pair<String?, String> {
         if (stringName == null) return Pair(null, "No context info")
@@ -191,7 +207,12 @@ class GroqRepository(private val preferencesRepository: PreferencesRepository) {
     }
     
     /**
-     * UI context-specific rules
+     * Returns translation guidelines tailored to the specified UI context type.
+     *
+     * Provides context-specific rules for translating UI strings such as buttons, titles, errors, and hints to ensure appropriate tone, length, and style. Defaults to general clarity guidelines if the context type is unrecognized.
+     *
+     * @param contextType The UI context type prefix (e.g., "btn_", "title_", "error_", "hint_"), or null for general context.
+     * @return A string containing translation instructions relevant to the given context type.
      */
     private fun getContextSpecificRules(contextType: String?): String {
         return when (contextType) {
@@ -216,7 +237,13 @@ class GroqRepository(private val preferencesRepository: PreferencesRepository) {
     }
     
     /**
-     * Execute with smart retry mechanism
+     * Executes a chat completion request with up to three retries on HTTP 429 (rate limit) errors using exponential backoff.
+     *
+     * Attempts to obtain a translation from the Groq API, retrying on rate limiting and returning the translated text on success.
+     *
+     * @param apiKey The API key used for authorization.
+     * @param request The chat completion request to send.
+     * @return A [Result] containing the translated text on success, or an exception on failure.
      */
     private suspend fun executeWithRetry(
         apiKey: String,
@@ -255,7 +282,13 @@ class GroqRepository(private val preferencesRepository: PreferencesRepository) {
     }
     
     /**
-     * Translate text using Groq API (legacy method - optimized)
+     * Translates English text to Vietnamese using the Groq API.
+     *
+     * This legacy method defaults to translating from English ("en") to Vietnamese ("vi") and optionally accepts a string resource name to provide UI context for improved translation quality.
+     *
+     * @param text The English text to translate.
+     * @param stringName Optional resource name used to infer UI context for the translation.
+     * @return The translation result as a [Result] containing the translated text or an error.
      */
     suspend fun translateText(
         text: String,
@@ -278,6 +311,13 @@ class GroqRepository(private val preferencesRepository: PreferencesRepository) {
         @GET("models")
         suspend fun getModels(@Header("Authorization") authorization: String): GroqModelsResponse
         
+        /**
+         * Sends a chat completion request to the Groq API and returns the response.
+         *
+         * @param authorization The authorization token for the Groq API.
+         * @param request The chat completion request payload.
+         * @return The response containing the chat completion result.
+         */
         @POST("chat/completions")
         suspend fun createChatCompletion(
             @Header("Authorization") authorization: String,
