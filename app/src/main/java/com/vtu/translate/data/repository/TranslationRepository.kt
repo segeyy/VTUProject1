@@ -23,7 +23,8 @@ import java.io.OutputStreamWriter
  */
 class TranslationRepository(
     private val groqRepository: GroqRepository,
-    private val logRepository: LogRepository
+    private val logRepository: LogRepository,
+    private val context: Context
 ) {
     
     private val _stringResources = MutableStateFlow<List<StringResource>>(emptyList())
@@ -327,9 +328,9 @@ class TranslationRepository(
                 
                 val folderName = languageFolderMap[targetLanguage] ?: "values-$targetLanguage"
                 
-                // Create directory structure in Downloads folder
-                val downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-                val resDir = File(downloadsDir, "res")
+                // Create directory structure in app's external files directory
+                val appExternalDir = context.getExternalFilesDir(null)
+                val resDir = File(appExternalDir, "res")
                 val valuesDir = File(resDir, folderName)
                 
                 if (!valuesDir.exists()) {

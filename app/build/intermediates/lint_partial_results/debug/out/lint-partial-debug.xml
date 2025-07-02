@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<incidents format="6" by="lint 8.1.1" type="partial_results">
+    <map id="UnsafeIntentLaunch">
+            <map id="unprotected">
+                <entry
+                    name="com.vtu.translate.ui.MainActivity"
+                    boolean="true"/>
+            </map>
+    </map>
+    <map id="AppBundleLocaleChanges">
+        <location id="localeChangeLocation"
+            file="${:app*debug*sourceProvider*0*javaDir*0}/com/vtu/translate/ui/MainActivity.kt"
+            line="84"
+            column="9"
+            startOffset="2826"
+            endLine="84"
+            endColumn="33"
+            endOffset="2850"/>
+    </map>
+    <map id="UnusedResources">
+        <location id="R.string.language_english"
+            file="${:app*debug*sourceProvider*0*resDir*0}/values/strings.xml"
+            line="67"
+            column="13"
+            startOffset="3394"
+            endLine="67"
+            endColumn="36"
+            endOffset="3417"/>
+        <location id="R.string.language_saved"
+            file="${:app*debug*sourceProvider*0*resDir*0}/values/strings.xml"
+            line="68"
+            column="13"
+            startOffset="3448"
+            endLine="68"
+            endColumn="34"
+            endOffset="3469"/>
+        <location id="R.string.app_language_en"
+            file="${:app*debug*sourceProvider*0*resDir*0}/values/strings.xml"
+            line="65"
+            column="13"
+            startOffset="3276"
+            endLine="65"
+            endColumn="35"
+            endOffset="3298"/>
+        <location id="R.string.language_settings"
+            file="${:app*debug*sourceProvider*0*resDir*0}/values/strings.xml"
+            line="64"
+            column="13"
+            startOffset="3211"
+            endLine="64"
+            endColumn="37"
+            endOffset="3235"/>
+        <location id="R.string.translation_completed"
+            file="${:app*debug*sourceProvider*0*resDir*0}/values/strings.xml"
+            line="27"
+            column="13"
+            startOffset="1450"
+            endLine="27"
+            endColumn="41"
+            endOffset="1478"/>
+        <location id="R.string.batch_size"
+            file="${:app*debug*sourceProvider*0*resDir*0}/values/strings.xml"
+            line="54"
+            column="13"
+            startOffset="2808"
+            endLine="54"
+            endColumn="30"
+            endOffset="2825"/>
+        <entry
+            name="model"
+            string="color[ic_launcher_background(U)],drawable[ic_discord(U),ic_translate(U),ic_file(U),ic_save(U),ic_clear(U),ic_stop_translate(U),ic_interface(U),ic_model(U),ic_start_translate(U),ic_launcher_foreground(U),ic_log(U),ic_settings(U),ic_key(U),ic_info(U),ic_copy(U)],mipmap[ic_launcher_round(U),ic_launcher(U)],string[app_language(U),app_version(U),language_english(D),translated_value_ko(U),app_language_en(D),api_settings_title(U),settings_title(U),api_key_saved(U),log_type_error(U),credit_title(U),model_group_deepseek_meta(U),select_file(U),get_api_key(U),dark_theme(U),log_yet(U),no_file_selected(U),error_invalid_file(U),about_subtitle(D),clear_log(U),tab_translate(U),select_model(U),log_type_success(U),translated_value_fr(U),interface_subtitle(U),language_vietnamese(D),language_settings(D),original_value(U),translated_value_ru(U),tab_settings(U),copy_log(U),translated_value_ja(U),interface_title(U),translated_value_vi(U),error_no_file_selected(U),error_no_api_key(U),translated_value_zh(U),translated_value_es(U),credit_discord(U),translated_value_default(U),translated_value_en(U),translation_settings_title(U),translating(U),file_saved(U),start_translate(U),target_language(U),model_group_meta(U),api_key_title(U),log_cleared(U),stop_translation(U),translation_speed(U),error_saving_file(U),log_type_info(U),error_api_call(D),batch_size(D),log_type_warning(U),translated_value_de(U),save_translated_file(U),continue_translation(U),log_copied(U),error_no_model_selected(U),tab_log(U),app_name(U),translation_settings_subtitle(U),api_settings_subtitle(U),about_title(U),translation_completed(D),credit_author(U),language_saved(D)],style[Theme_VTUTranslateTool(U)],xml[data_extraction_rules(U),backup_rules(U)];10^0^a,11^0^a;;;"/>
+        <location id="R.string.about_subtitle"
+            file="${:app*debug*sourceProvider*0*resDir*0}/values/strings.xml"
+            line="60"
+            column="13"
+            startOffset="3064"
+            endLine="60"
+            endColumn="34"
+            endOffset="3085"/>
+        <location id="R.string.error_api_call"
+            file="${:app*debug*sourceProvider*0*resDir*0}/values/strings.xml"
+            line="88"
+            column="13"
+            startOffset="4418"
+            endLine="88"
+            endColumn="34"
+            endOffset="4439"/>
+        <location id="R.string.language_vietnamese"
+            file="${:app*debug*sourceProvider*0*resDir*0}/values/strings.xml"
+            line="66"
+            column="13"
+            startOffset="3334"
+            endLine="66"
+            endColumn="39"
+            endOffset="3360"/>
+    </map>
+
+</incidents>
