@@ -13,11 +13,6 @@ jobs:
     strategy:
       matrix:
         java-version: [17, 21]
-        include:
-          - java-version: 17
-            jdk-id: jdk17
-          - java-version: 21
-            jdk-id: jdk21
       fail-fast: false
 
     steps:
@@ -62,13 +57,19 @@ jobs:
         distribution: 'temurin'
         cache: 'gradle'
 
+    - name: Install Gradle
+      run: |
+        # Cài đặt Gradle (phiên bản mặc định hoặc chỉ định)
+        sudo apt-get update
+        sudo apt-get install -y gradle
+
     - name: Cache Gradle dependencies
       uses: actions/cache@v3
       with:
         path: |
           ~/.gradle/caches
           ~/.gradle/wrapper
-        key: ${{ runner.os }}-gradle-${{ matrix.java-version }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+        key: ${{ runner.os }}-gradle-${{ matrix.java-version }}-${{ hashFiles('**/*.gradle*') }}
         restore-keys: |
           ${{ runner.os }}-gradle-${{ matrix.java-version }}-
           ${{ runner.os }}-gradle-
@@ -81,19 +82,17 @@ jobs:
         yes | sdkmanager --licenses || true
         sdkmanager "platform-tools" "platforms;android-34"
 
-    - name: Grant gradlew permissions
-      run: chmod +x ./gradlew
-
+    # SỬA: Sử dụng gradle thay vì gradlew
     - name: Build with JDK ${{ matrix.java-version }}
       run: |
-        ./gradlew assemble${{ steps.detect-project.outputs.BUILD_TYPE }} --stacktrace
+        gradle assemble${{ steps.detect-project.outputs.BUILD_TYPE }} --stacktrace
 
     - name: Upload APK
       if: success()
       uses: actions/upload-artifact@v4
       with:
         name: app-${{ steps.detect-project.outputs.BUILD_TYPE }}-jdk${{ matrix.java-version }}
-        path: ${{ steps.detect-project.outputs.ANDROID_ROOT }}/build/outputs/apk/${{ steps.detect-project.outputs.BUILD_TYPE }}/*.apk
+        path: "${{ steps.detect-project.outputs.ANDROID_ROOT }}/build/outputs/apk/${{ steps.detect-project.outputs.BUILD_TYPE }}/*.apk"
         retention-days: 7
 
   final-result:
@@ -106,24 +105,15 @@ jobs:
     - name: Determine successful build
       id: check-success
       run: |
-        # Lấy kết quả từ các job
-        success_jdk=""
-        build_type=""
-        
-        # Kiểm tra job JDK 17
-        if [[ '${{ needs.detect-and-build.result }}' == 'success' && '${{ needs.detect-and-build.outputs.PREFERRED_JDK }}' == '17' ]]; then
-          success_jdk="17"
-        # Kiểm tra job JDK 21
-        elif [[ '${{ needs.detect-and-build.result }}' == 'success' && '${{ needs.detect-and-build.outputs.PREFERRED_JDK }}' == '21' ]]; then
-          success_jdk="21"
-        # Nếu không có JDK ưu tiên, chọn bất kỳ job thành công nào
-        elif [[ '${{ needs.detect-and-build.result }}' == 'success' ]]; then
-          success_jdk="${{ matrix.java-version }}"
-        fi
-        
-        if [ -n "$success_jdk" ]; then
+        # Tìm bất kỳ job build nào thành công
+        if [[ '${{ needs.detect-and-build.result }}' == 'success' ]]; then
           echo "final-success=true" >> $GITHUB_OUTPUT
-          echo "success-jdk=$success_jdk" >> $GITHUB_OUTPUT
+          # Giả sử chúng ta chọn JDK 17 nếu có, không thì JDK 21
+          if [[ '${{ needs.detect-and-build.outputs.PREFERRED_JDK }}' == '17' ]]; then
+            echo "success-jdk=17" >> $GITHUB_OUTPUT
+          else
+            echo "success-jdk=21" >> $GITHUB_OUTPUT
+          fi
           echo "build-type=${{ needs.detect-and-build.outputs.BUILD_TYPE }}" >> $GITHUB_OUTPUT
         else
           echo "final-success=false" >> $GITHUB_OUTPUT
@@ -141,7 +131,6 @@ jobs:
     - name: Prepare final APK
       if: steps.check-success.outputs.final-success == 'true'
       run: |
-        # Di chuyển APK vào vị trí cuối cùng
         mv downloaded-artifact/*.apk final-app.apk
 
     - name: Upload final APK
@@ -161,7 +150,7 @@ jobs:
             issue_number: context.issue.number,
             owner: context.repo.owner,
             repo: context.repo.repo,
-            body: `✅ Build succeeded with JDK ${{ steps.check-success.outputs.success-jdk }}! 
+            body: `✅ Build succeeded! 
             Download: [final-app.apk](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts)`
           })
 
