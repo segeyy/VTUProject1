@@ -13,17 +13,14 @@ jobs:
     continue-on-error: ${{ matrix.continue-on-error }}
     strategy:
       matrix:
-        java-version: [17, 21]
+        jdk-id: ['jdk17', 'jdk21']
         include:
-          - java-version: 17
+          - jdk-id: jdk17
+            java-version: 17
             continue-on-error: true
-            jdk-id: jdk17
-          - java-version: 21
+          - jdk-id: jdk21
+            java-version: 21
             continue-on-error: false
-            jdk-id: jdk21
-        exclude: 
-          - java-version: 21
-            when: steps.detect-project.outputs.build-success == 'true'
 
     steps:
     - name: Checkout code
@@ -63,21 +60,22 @@ jobs:
         # Đánh dấu build chưa thành công
         echo "build-success=false" >> $GITHUB_OUTPUT
 
-    - name: Detect preferred JDK
-      id: detect-jdk
+    # Bỏ qua build nếu không phải JDK ưu tiên
+    - name: Check JDK preference
+      id: check-jdk
       run: |
-        if [ "${{ matrix.jdk-id }}" == "jdk17" ] && [ "${{ steps.detect-project.outputs.PREFERRED_JDK }}" == "21" ]; then
+        preferred_jdk="${{ steps.detect-project.outputs.PREFERRED_JDK }}"
+        current_jdk="${{ matrix.java-version }}"
+        
+        if [[ -n "$preferred_jdk" && "$preferred_jdk" != "$current_jdk" ]]; then
           echo "skip-build=true" >> $GITHUB_OUTPUT
-          echo "Skipping JDK 17 build because preferred JDK is 21"
-        elif [ "${{ matrix.jdk-id }}" == "jdk21" ] && [ "${{ steps.detect-project.outputs.PREFERRED_JDK }}" == "17" ]; then
-          echo "skip-build=true" >> $GITHUB_OUTPUT
-          echo "Skipping JDK 21 build because preferred JDK is 17"
+          echo "Skipping JDK $current_jdk build (preferred is $preferred_jdk)"
         else
           echo "skip-build=false" >> $GITHUB_OUTPUT
         fi
 
     - name: Setup JDK ${{ matrix.java-version }}
-      if: steps.detect-jdk.outputs.skip-build == 'false'
+      if: steps.check-jdk.outputs.skip-build == 'false'
       uses: actions/setup-java@v3
       with:
         java-version: ${{ matrix.java-version }}
@@ -85,7 +83,7 @@ jobs:
         cache: 'gradle'
 
     - name: Cache Gradle dependencies
-      if: steps.detect-jdk.outputs.skip-build == 'false'
+      if: steps.check-jdk.outputs.skip-build == 'false'
       uses: actions/cache@v3
       with:
         path: |
@@ -97,43 +95,41 @@ jobs:
           ${{ runner.os }}-gradle-
 
     - name: Setup Android SDK
-      if: steps.detect-jdk.outputs.skip-build == 'false'
+      if: steps.check-jdk.outputs.skip-build == 'false'
       uses: android-actions/setup-android@v3
 
     - name: Accept SDK licenses
-      if: steps.detect-jdk.outputs.skip-build == 'false'
+      if: steps.check-jdk.outputs.skip-build == 'false'
       run: |
         yes | sdkmanager --licenses || true
         sdkmanager "platform-tools" "platforms;android-34"
 
     - name: Grant gradlew permissions
-      if: steps.detect-jdk.outputs.skip-build == 'false'
+      if: steps.check-jdk.outputs.skip-build == 'false'
       run: chmod +x ./gradlew
 
     - name: Build with JDK ${{ matrix.java-version }}
-      if: steps.detect-jdk.outputs.skip-build == 'false'
+      if: steps.check-jdk.outputs.skip-build == 'false'
       run: |
         ./gradlew assemble${{ steps.detect-project.outputs.BUILD_TYPE }}
-      env:
-        ANDROID_HOME: ${{ env.ANDROID_HOME }}
-        ANDROID_SDK_ROOT: ${{ env.ANDROID_SDK_ROOT }}
 
     - name: Mark build success
-      if: success() && steps.detect-jdk.outputs.skip-build == 'false'
+      if: success() && steps.check-jdk.outputs.skip-build == 'false'
       run: |
         echo "build-success=true" >> $GITHUB_OUTPUT
       id: build-result
 
     - name: Upload APK (JDK ${{ matrix.java-version }})
-      if: success() && steps.detect-jdk.outputs.skip-build == 'false'
+      if: success() && steps.check-jdk.outputs.skip-build == 'false'
       uses: actions/upload-artifact@v3
       with:
         name: app-${{ steps.detect-project.outputs.BUILD_TYPE }}-jdk${{ matrix.java-version }}
         path: ${{ steps.detect-project.outputs.ANDROID_ROOT }}/build/outputs/apk/${{ steps.detect-project.outputs.BUILD_TYPE }}/*.apk
         retention-days: 7
 
+    # Bỏ qua thông báo fallback nếu đây là JDK ưu tiên
     - name: Auto JDK Fallback Notification
-      if: ${{ failure() && matrix.jdk-id == 'jdk17' && steps.detect-jdk.outputs.skip-build == 'false' }}
+      if: ${{ failure() && matrix.jdk-id == 'jdk17' && steps.check-jdk.outputs.skip-build == 'false' && steps.detect-project.outputs.PREFERRED_JDK != '21' }}
       uses: actions/github-script@v6
       with:
         script: |
@@ -156,17 +152,18 @@ jobs:
       run: |
         # Lấy kết quả từ các job
         success_jdk=""
-        build_type=""
+        build_type="${{ needs.detect-and-build.outputs.BUILD_TYPE }}"
         
-        # Kiểm tra kết quả từng job matrix
-        for result in ${{ toJSON(needs.detect-and-build.outputs) }}; do
-          if [[ "$result" == *"build-success=true"* ]]; then
-            # Lấy JDK version từ job name
-            jdk_version=$(echo "$result" | grep -oP 'jdk\d+')
-            success_jdk=${jdk_version//jdk/}
-            build_type=$(echo "$result" | grep -oP 'BUILD_TYPE=\K\w+')
-          fi
-        done
+        # Kiểm tra xem build JDK 17 có thành công không
+        if [[ '${{ needs.detect-and-build.outputs.build-success }}' == 'true' && '${{ needs.detect-and-build.outputs.PREFERRED_JDK }}' == '17' ]]; then
+          success_jdk="17"
+        # Kiểm tra build JDK 21 có thành công không
+        elif [[ '${{ needs.detect-and-build.outputs.build-success }}' == 'true' && '${{ needs.detect-and-build.outputs.PREFERRED_JDK }}' == '21' ]]; then
+          success_jdk="21"
+        # Nếu không có JDK ưu tiên, chọn bản build thành công đầu tiên
+        elif [[ '${{ needs.detect-and-build.outputs.build-success }}' == 'true' ]]; then
+          success_jdk="${{ matrix.java-version }}"
+        fi
         
         if [ -n "$success_jdk" ]; then
           echo "final-success=true" >> $GITHUB_OUTPUT
