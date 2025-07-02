@@ -17,7 +17,7 @@ runs:
       shell: bash
       env:
         HF_TOKEN: ${{ secrets.HF_TOKEN }}
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         chmod +x $GITHUB_ACTION_PATH/analyze.sh
         $GITHUB_ACTION_PATH/analyze.sh \
